@@ -41,6 +41,25 @@ jobs:
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Configure optional signing key
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "No signing secrets configured; using the generated debug key."
+            exit 0
+          fi
+          printf '%s' "$SIGNING_KEY" | base64 --decode > release.keystore
+          {
+            printf 'STORE_FILE_PATH=../release.keystore\n'
+            printf 'STORE_PASSWORD=%s\n' "$STORE_PASSWORD"
+            printf 'KEY_ALIAS=%s\n' "$KEY_ALIAS"
+            printf 'KEY_PASSWORD=%s\n' "$KEY_PASSWORD"
+          } > local.properties
+
       - name: Build installable debug APK
         run: |
           chmod +x gradlew

@@ -43,7 +43,9 @@
 
 ### GitHub Actions 构建
 
-在仓库的 **Actions → Build installable APK → Run workflow** 中可以手动构建。构建成功后，在运行详情页的 **Artifacts** 区域下载 `MiPush-*-debug`，解压后即可获得可直接安装的 Debug APK。构建产物保留 30 天。
+在仓库的 **Actions → Build installable APK → Run workflow** 中可以手动构建。构建成功后，在运行详情页的 **Artifacts** 区域下载 `MiPush-*-debug`，解压后即可获得可安装的 Debug APK。构建产物保留 30 天。
+
+未配置签名 Secrets 时，Actions 会使用临时 Debug 签名，通常不能直接覆盖官方签名版本，需要先卸载原应用。若需要让多次构建保持同一签名，可以在仓库 Secrets 中配置 `SIGNING_KEY`（Base64 格式）、`KEY_STORE_PASSWORD`、`ALIAS` 和 `KEY_PASSWORD`。
 
 ### License
 

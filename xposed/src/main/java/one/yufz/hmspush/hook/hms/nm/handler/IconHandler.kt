@@ -10,7 +10,11 @@ import one.yufz.hmspush.hook.util.newBuilder
 
 class IconHandler : NotificationHandler {
     override fun careAbout(manager: INotificationManager, context: Context, packageName: String, id: Int, notification: Notification): Boolean {
-        return Prefs.prefModel.useCustomIcon
+        // QQ does not consistently provide an Android-compliant monochrome
+        // status-bar icon. Apply the bundled fallback automatically while
+        // retaining the existing opt-in behavior for every other app.
+        return Prefs.prefModel.useCustomIcon ||
+            IconManager.hasBuiltInNotificationIcon(packageName)
     }
 
     override fun handle(chain: NotificationHandler.Chain, manager: INotificationManager, context: Context, packageName: String, id: Int, notification: Notification) {

@@ -37,6 +37,14 @@
 
 通过 GitHub 反馈 MiPushFramework 的问题时请到[这里](https://github.com/NihilityT/MiPushFramework/issues)反馈
 
+### QQ 通知图标适配
+
+本分支为 `com.tencent.mobileqq` 内置了符合 Android 状态栏规范的单色小图标。QQ 通知会自动使用该兜底图标，不需要开启“自定义通知图标”；用户配置的自定义图标仍具有更高优先级。该适配只替换状态栏小图标，不会覆盖联系人头像等大图标。
+
+### GitHub Actions 构建
+
+在仓库的 **Actions → Build installable APK → Run workflow** 中可以手动构建。构建成功后，在运行详情页的 **Artifacts** 区域下载 `MiPush-*-debug`，解压后即可获得可直接安装的 Debug APK。构建产物保留 30 天。
+
 ### License
 
 本分支包含从 [MiPushFaker](https://github.com/yin-ol/MiPushFaker) 移植并修改的系统属性 Hook。MiPushFaker 使用 [GNU Affero General Public License v3](LICENSE.MiPushFaker-AGPL-3.0)，因此本组合分发版本遵循仓库根目录中的 [GNU AGPL v3](LICENSE)。

@@ -28,4 +28,19 @@ The repository-root LICENSE is also the GNU AGPL version 3 and governs this
 combined distribution; pre-existing GPL-covered portions retain their GPL
 notices and permissions as allowed by GPLv3 section 13.
 
+AndroidNotifyIconAdapt-derived QQ notification icon
+---------------------------------------------------
+The bundled QQ status-bar notification icon in:
+
+  xposed/src/main/assets/mipush_builtin_icons/com.tencent.mobileqq.json
+
+is adapted from the AndroidNotifyIconAdapt project by Fankes Studio:
+
+  https://github.com/fankes/AndroidNotifyIconAdapt
+
+AndroidNotifyIconAdapt is licensed under the GNU Affero General Public
+License, version 3 or (at your option) any later version. The icon is
+included here under GNU AGPL version 3. The original JSON identifies
+fankes as its contributor.
+
 No endorsement by the upstream authors is implied.

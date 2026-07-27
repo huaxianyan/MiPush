@@ -1,80 +1,62 @@
-name: Android CI
+name: Build installable APK
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: apk-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-
+  build-debug-apk:
+    name: Build debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: set up JDK 11
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
-        distribution: 'adopt'
-        cache: gradle
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
 
-    - name: Write key
-      run: |
-        if [ ! -z "${{ secrets.SIGNING_KEY }}" ]; then
-          echo STORE_PASSWORD='${{ secrets.KEY_STORE_PASSWORD }}' >> local.properties
-          echo KEY_ALIAS='${{ secrets.ALIAS }}' >> local.properties
-          echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}' >> local.properties
-          echo STORE_FILE_PATH='../release.keystore' >> local.properties
-          echo ${{ secrets.SIGNING_KEY }} | base64 --decode > release.keystore
-        fi
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-    - name: Git describe
-      id: ghd
-      uses: proudust/gh-describe@v2.1.0
-      with:
-        exclude: v*-*
+      - name: Install Android SDK 34
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew --build-cache --parallel --daemon -P versionName=${{ steps.ghd.outputs.describe }} assemble
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
 
-    - name: Collect artifcat name
-      run: |
-        echo "debug_artifact=$(basename -s .apk app/build/outputs/apk/debug/*.apk)" >> $GITHUB_ENV
-        echo "release_artifact=$(basename -s .apk app/build/outputs/apk/release/*.apk)" >> $GITHUB_ENV
+      - name: Build installable debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew --build-cache --stacktrace \
+            -PversionName="actions-${GITHUB_SHA::7}" \
+            :app:assembleDebug
 
-    - name: Upload Debug
-      uses: actions/upload-artifact@v4.6.0
-      with:
-        name: ${{ env.debug_artifact }}
-        path: app/build/outputs/apk/debug/*.apk
+      - name: Name artifact
+        id: artifact
+        shell: bash
+        run: echo "name=MiPush-${GITHUB_SHA::7}-debug" >> "$GITHUB_OUTPUT"
 
-    - name: Upload Release
-      uses: actions/upload-artifact@v4.6.0
-      with:
-        name: ${{ env.release_artifact }}
-        path: app/build/outputs/apk/release/*.apk
-
-    - name: Get Version Name
-      id: gvn
-      run: |
-        artifact_name=(app/build/outputs/apk/release/*.apk)
-        version=$(echo $artifact_name | sed 's/.*(v.*)(-[^-]+){2}/\1/' -r)
-        echo "version=$version" >> $GITHUB_OUTPUT
-
-    - name: Release
-      uses: softprops/action-gh-release@v2
-      with:
-        name: ${{ steps.gvn.outputs.version }}
-        tag_name: ${{ steps.gvn.outputs.version }}
-        target_commitish: ${{ steps.ghd.outputs.sha }}
-        prerelease: true
-        files: app/build/outputs/apk/*/*.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30

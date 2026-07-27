@@ -12,11 +12,17 @@ import one.yufz.hmspush.common.model.IconModel
 import java.io.File
 
 object IconManager {
+    private const val QQ_PACKAGE_NAME = "com.tencent.mobileqq"
+    private const val BUILT_IN_ICON_ASSET_DIR = "mipush_builtin_icons"
+
     private val context = AndroidAppHelper.currentApplication()
 
     private val iconDir = File(context.filesDir, "hms_push/icons")
 
     private val cache = LruCache<String, IconData>(20)
+
+    fun hasBuiltInNotificationIcon(packageName: String): Boolean =
+        packageName == QQ_PACKAGE_NAME
 
     suspend fun saveToLocal(packageName: String, jsonString: String) {
         withContext(Dispatchers.IO) {
@@ -40,15 +46,25 @@ object IconManager {
         if (cacheIconData != null) return cacheIconData
 
         val iconDataFile = File(iconDir, packageName)
-
-        if (!iconDataFile.exists()) return null
-
-        val iconData = IconData.fromJson(iconDataFile.readText())
-            .scaleForNotification(context)
+        val rawIconData = if (iconDataFile.exists()) {
+            IconData.fromJson(iconDataFile.readText())
+        } else {
+            getBuiltInNotificationIconData(packageName) ?: return null
+        }
+        val iconData = rawIconData.scaleForNotification(context)
 
         cache.put(packageName, iconData)
 
         return iconData
+    }
+
+    private fun getBuiltInNotificationIconData(packageName: String): IconData? {
+        if (!hasBuiltInNotificationIcon(packageName)) return null
+
+        val assetPath = "$BUILT_IN_ICON_ASSET_DIR/$packageName.json"
+        return context.assets.open(assetPath).bufferedReader().use {
+            IconData.fromJson(it.readText())
+        }
     }
 
     suspend fun getAllIconModel(): List<IconModel> {

@@ -38,6 +38,9 @@
 通过 GitHub 反馈 MiPushFramework 的问题时请到[这里](https://github.com/NihilityT/MiPushFramework/issues)反馈
 
 ### License
-[GNU General Public License v3 (GPL-3)](http://www.gnu.org/copyleft/gpl.html).
+
+本分支包含从 [MiPushFaker](https://github.com/yin-ol/MiPushFaker) 移植并修改的系统属性 Hook。MiPushFaker 使用 [GNU Affero General Public License v3](LICENSE.MiPushFaker-AGPL-3.0)，因此本组合分发版本遵循仓库根目录中的 [GNU AGPL v3](LICENSE)。
+
+原 MiPush/HMSPush 代码仍保留其 [GNU General Public License v3](LICENSE.MiPush-GPL-3.0) 授权。详细来源、文件范围和署名参见 [NOTICE](NOTICE)。GPLv3 与 AGPLv3 的组合依据 GPLv3 第 13 节进行分发。
 
 有些狗不遵守开源协议（非本项目），请**务必**遵守开源协议 **（此话来自MiPushFramework的README.md）**

@@ -1,0 +1,31 @@
+Licensing and attribution notices
+=================================
+
+MiPush
+------
+This repository is derived from:
+
+* NihilityT/MiPush: https://github.com/NihilityT/MiPush
+* fei-ke/HMSPush: https://github.com/fei-ke/HMSPush
+
+Those portions remain available under the GNU General Public License,
+version 3. A verbatim copy is included as LICENSE.MiPush-GPL-3.0.
+
+MiPushFaker-derived property spoofing
+-------------------------------------
+The native android.os.SystemProperties hooks and associated MIUI property
+values in:
+
+  xposed/src/main/java/one/yufz/hmspush/hook/fakedevice/FakeProperty.kt
+
+are adapted from MiPushFaker by yin-ol (GitHub user yin-ol / yhfcn):
+
+  https://github.com/yin-ol/MiPushFaker
+
+MiPushFaker is licensed under the GNU Affero General Public License,
+version 3. A verbatim copy is included as LICENSE.MiPushFaker-AGPL-3.0.
+The repository-root LICENSE is also the GNU AGPL version 3 and governs this
+combined distribution; pre-existing GPL-covered portions retain their GPL
+notices and permissions as allowed by GPLv3 section 13.
+
+No endorsement by the upstream authors is implied.

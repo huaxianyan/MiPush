@@ -38,25 +38,34 @@ object IconManager {
 
                 writeText(jsonString)
             }
+            cache.remove(cacheKey(packageName, true))
         }
     }
 
-    fun getNotificationIconData(context: Context, packageName: String): IconData? {
-        val cacheIconData = cache.get(packageName)
+    fun getNotificationIconData(
+        context: Context,
+        packageName: String,
+        useCustomIcon: Boolean = true
+    ): IconData? {
+        val cacheEntryKey = cacheKey(packageName, useCustomIcon)
+        val cacheIconData = cache.get(cacheEntryKey)
         if (cacheIconData != null) return cacheIconData
 
         val iconDataFile = File(iconDir, packageName)
-        val rawIconData = if (iconDataFile.exists()) {
+        val rawIconData = if (useCustomIcon && iconDataFile.exists()) {
             IconData.fromJson(iconDataFile.readText())
         } else {
             getBuiltInNotificationIconData(packageName) ?: return null
         }
         val iconData = rawIconData.scaleForNotification(context)
 
-        cache.put(packageName, iconData)
+        cache.put(cacheEntryKey, iconData)
 
         return iconData
     }
+
+    private fun cacheKey(packageName: String, useCustomIcon: Boolean) =
+        "$packageName:${if (useCustomIcon) "custom" else "built-in"}"
 
     private fun getBuiltInNotificationIconData(packageName: String): IconData? {
         if (!hasBuiltInNotificationIcon(packageName)) return null
@@ -86,7 +95,8 @@ object IconManager {
             } else {
                 packages.onEach {
                     File(iconDir, it).delete()
-                    cache.remove(it)
+                    cache.remove(cacheKey(it, true))
+                    cache.remove(cacheKey(it, false))
                 }
             }
         }

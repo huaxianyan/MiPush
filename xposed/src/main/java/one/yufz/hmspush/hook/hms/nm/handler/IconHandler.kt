@@ -19,7 +19,11 @@ class IconHandler : NotificationHandler {
 
     override fun handle(chain: NotificationHandler.Chain, manager: INotificationManager, context: Context, packageName: String, id: Int, notification: Notification) {
         var newNotification = notification
-        val iconData = IconManager.getNotificationIconData(context, packageName)
+        val iconData = IconManager.getNotificationIconData(
+            context,
+            packageName,
+            Prefs.prefModel.useCustomIcon
+        )
         if (iconData != null) {
             val builder = notification.newBuilder(context)
                 .setSmallIcon(Icon.createWithBitmap(iconData.iconBitmap))

@@ -68,7 +68,7 @@ private String getVersionNameFromGit() {
 ext {
     gitVersionCode = getVersionCode()
     gitVersionName = getVersionName()
-    APPLICATION_ID = "com.neko7ina.mipsuh.pixel"
+    APPLICATION_ID = "com.neko7ina.mipush.pixel"
 
     COMPILE_SDK = 34
     MIN_SDK = 26

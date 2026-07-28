@@ -69,5 +69,6 @@ dependencies {
     api project(":xposed")
 
     //remove this line will cause proguard to remove code from library module
+    compileOnly 'io.github.libxposed:api:102.0.0'
     compileOnly 'de.robv.android.xposed:api:82'
 }

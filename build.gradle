@@ -68,7 +68,9 @@ private String getVersionNameFromGit() {
 ext {
     gitVersionCode = getVersionCode()
     gitVersionName = getVersionName()
-    APPLICATION_ID = "com.neko7ina.mipush"
+    // Keep migration builds isolated from the frozen Legacy general release while hooks are ported.
+    // Change back to com.neko7ina.mipush only after the API 102 build reaches release parity.
+    APPLICATION_ID = "com.neko7ina.mipush.modern"
 
     COMPILE_SDK = 34
     MIN_SDK = 26

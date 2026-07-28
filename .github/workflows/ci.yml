@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - modern-api-102-general
   pull_request:
 
 permissions:

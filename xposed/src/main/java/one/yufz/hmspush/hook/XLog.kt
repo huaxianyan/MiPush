@@ -32,10 +32,11 @@ object XLog {
         if (stackTrace) {
             d(tag, Log.getStackTraceString(Throwable()))
         }
+        val hookedExecutable = executable
         if (throwable != null) {
-            e(tag, "${executable.name} thrown", throwable)
-        } else if (executable is Method && executable.returnType != Void.TYPE) {
-            d(tag, "${executable.name} return $result")
+            e(tag, "${hookedExecutable.name} thrown", throwable)
+        } else if (hookedExecutable is Method && hookedExecutable.returnType != Void.TYPE) {
+            d(tag, "${hookedExecutable.name} return $result")
         }
         d(tag, "╚═══════════════════════════════════════════════════════")
     }

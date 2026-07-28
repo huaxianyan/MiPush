@@ -9,6 +9,11 @@ import one.yufz.hmspush.hook.hms.nm.INotificationManager
 import one.yufz.hmspush.hook.util.newBuilder
 
 class IconHandler : NotificationHandler {
+    companion object {
+        private const val QQ_PACKAGE_NAME = "com.tencent.mobileqq"
+        private const val EXTRA_PREFER_SMALL_ICON = "android.app.preferSmallIcon"
+    }
+
     override fun careAbout(manager: INotificationManager, context: Context, packageName: String, id: Int, notification: Notification): Boolean {
         // QQ does not consistently provide an Android-compliant monochrome
         // status-bar icon. Apply the bundled fallback automatically while
@@ -34,7 +39,15 @@ class IconHandler : NotificationHandler {
                 }
             }
 
-            newNotification = builder.build()
+            newNotification = builder.build().apply {
+                if (packageName == QQ_PACKAGE_NAME) {
+                    // Android 16's notification redesign otherwise replaces the small icon in the
+                    // conversation-avatar badge with QQ's full-color launcher icon. This framework
+                    // extra is the platform-supported opt-out consumed by SystemUI's
+                    // NotificationIconStyleProviderImpl.
+                    extras.putBoolean(EXTRA_PREFER_SMALL_ICON, true)
+                }
+            }
         }
         super.handle(chain, manager, context, packageName, id, newNotification)
     }

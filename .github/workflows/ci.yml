@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-debug-apk:
-    name: Build debug APK
+  build-release-apk:
+    name: Build release APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -60,22 +60,22 @@ jobs:
             printf 'KEY_PASSWORD=%s\n' "$KEY_PASSWORD"
           } > local.properties
 
-      - name: Build installable debug APK
+      - name: Build installable release APK
         run: |
           chmod +x gradlew
           ./gradlew --build-cache --stacktrace \
             -PversionName="actions-${GITHUB_SHA::7}" \
-            :app:assembleDebug
+            :app:assembleRelease
 
       - name: Name artifact
         id: artifact
         shell: bash
-        run: echo "name=MiPush-${GITHUB_SHA::7}-debug" >> "$GITHUB_OUTPUT"
+        run: echo "name=MiPush-${GITHUB_SHA::7}-release" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact.outputs.name }}
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 30

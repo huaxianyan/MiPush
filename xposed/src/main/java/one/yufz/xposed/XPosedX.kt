@@ -9,41 +9,6 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
-/** Mutable compatibility view used by the project's hook DSL on Modern API 102. */
-class HookParam internal constructor(
-    val executable: Executable,
-    var thisObject: Any?,
-    val args: Array<Any?>
-) {
-    val method: Executable
-        get() = executable
-
-    var result: Any? = null
-        set(value) {
-            field = value
-            throwable = null
-            returnEarly = true
-        }
-
-    var throwable: Throwable? = null
-        set(value) {
-            field = value
-            if (value != null) returnEarly = true
-        }
-
-    internal var returnEarly: Boolean = false
-
-    internal fun setProceededResult(value: Any?) {
-        result = value
-        returnEarly = false
-    }
-
-    internal fun setProceededThrowable(value: Throwable) {
-        throwable = value
-        returnEarly = false
-    }
-}
-
 typealias HookAction = HookParam.() -> Unit
 typealias ReplaceAction = HookParam.() -> Any?
 typealias HookCallback = HookContext.() -> Unit
@@ -100,7 +65,11 @@ fun Class<*>.hookAllMethods(
 
 private fun Executable.installHook(callback: HookCallback): XposedInterface.HookHandle {
     val context = HookContext().apply(callback)
-    return ModernRuntime.hook(this) { chain -> context.intercept(chain) }
+    var handle: XposedInterface.HookHandle? = null
+    handle = ModernRuntime.hook(this) { chain ->
+        context.intercept(chain, checkNotNull(handle))
+    }
+    return handle
 }
 
 class HookContext {
@@ -130,11 +99,15 @@ class HookContext {
         replaceAction = action
     }
 
-    internal fun intercept(chain: XposedInterface.Chain): Any? {
+    internal fun intercept(
+        chain: XposedInterface.Chain,
+        handle: XposedInterface.HookHandle
+    ): Any? {
         val param = HookParam(
             chain.executable,
             chain.thisObject,
-            chain.args.toTypedArray()
+            chain.args.toTypedArray(),
+            handle
         )
 
         val replacement = replaceAction
@@ -163,10 +136,6 @@ class HookContext {
         param.throwable?.let { throw it }
         return param.result
     }
-}
-
-fun HookParam.unhook(handle: XposedInterface.HookHandle) {
-    handle.unhook()
 }
 
 fun Any.callMethod(methodName: String, vararg args: Any?): Any? =

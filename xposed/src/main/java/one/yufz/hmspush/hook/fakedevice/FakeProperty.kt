@@ -146,7 +146,7 @@ private fun installPropertyHooksIfNeeded() {
 private fun hookOptional(
     methodName: String,
     vararg parameterTypes: Class<*>,
-    afterHook: de.robv.android.xposed.XC_MethodHook.MethodHookParam.() -> Unit
+    afterHook: one.yufz.xposed.HookParam.() -> Unit
 ) {
     try {
         val systemProperties = Build::class.java.classLoader.findClass("android.os.SystemProperties")

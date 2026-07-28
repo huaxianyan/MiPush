@@ -17,6 +17,9 @@ import java.lang.reflect.InvocationTargetException
 
 object SystemNotificationManager {
     private const val TAG = "SystemNotificationManager"
+    private const val QQ_PACKAGE_NAME = "com.tencent.mobileqq"
+    private const val QQ_MIPUSH_NOTIFICATION_TAG = "mipush_com.tencent.mobileqq"
+    private const val EXTRA_PREFER_SMALL_ICON = "android.app.preferSmallIcon"
 
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -39,6 +42,19 @@ object SystemNotificationManager {
         tag: String?, id: Int, notification: Notification
     ) {
         XLog.d(TAG, "notify() called with: packageName = $packageName, tag = $tag, id = $id, notification = $notification")
+
+        if (
+            packageName == QQ_PACKAGE_NAME &&
+            tag == QQ_MIPUSH_NOTIFICATION_TAG &&
+            notification.extras.getString(Notification.EXTRA_TEMPLATE) ==
+            Notification.MessagingStyle::class.java.name
+        ) {
+            // MiPushFramework has already populated smallIcon from its custom icon JSON. Ask
+            // Android 16 to use that existing icon for the badge over the conversation avatar.
+            // Do not rebuild the notification: its Person/large-icon data must remain untouched.
+            notification.extras.putBoolean(EXTRA_PREFER_SMALL_ICON, true)
+            XLog.d(TAG, "Using the existing QQ small icon for the conversation badge")
+        }
 
         //enqueueNotificationWithTag(String pkg, String opPkg, String tag, int id, Notification notification, int userId)
         val methodEnqueueNotificationWithTag = XposedHelpers.findMethodExact(notificationManager.javaClass, "enqueueNotificationWithTag", String::class.java, String::class.java, String::class.java, Int::class.java, Notification::class.java, Int::class.java)

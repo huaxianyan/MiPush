@@ -8,7 +8,6 @@ import java.util.*
 object NotificationHandlers {
     private val handlers = listOf(
         IconHandler(),
-        QqConversationBadgeHandler(),
         GroupNotificationHandler(),
         GroupByIdHandler(),
         FinalHandler()

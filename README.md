@@ -39,7 +39,7 @@
 
 ### QQ 自定义通知图标
 
-本分支不为 QQ 自动提供或强制启用兜底图标，也不替换通知原有的小图标。对于 `com.tencent.mobileqq` 的 `MessagingStyle` 通知，Android 16 联系人头像右下角会直接使用通知中已经存在的 `smallIcon`，因此可以显示 MiPushFramework 自定义配置提供的图标，而不是 QQ 的启动器图标。该处理只修改图标选择标记，不重建通知，也不修改联系人或群头像。
+本分支不为 QQ 提供图标，也不替换通知原有的小图标。图标由 MiPushFramework 的自定义图标 JSON 生成；MiPush 在拦截 MiPushFramework 发布 `com.tencent.mobileqq` 的 `MessagingStyle` 通知后，只加入 Android 16 的图标选择标记，让联系人头像右下角使用通知中已经存在的 `smallIcon`，而不是 QQ 的启动器图标。该处理不重建通知，也不修改联系人或群头像。
 
 ### GitHub Actions 构建
 

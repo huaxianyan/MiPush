@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.graphics.drawable.Icon
 import android.os.Build
+import android.service.notification.StatusBarNotification
 import android.view.View
 import android.widget.RemoteViews
 import de.robv.android.xposed.XposedHelpers
@@ -28,6 +29,8 @@ class HookSystemUI {
     }
 
     fun hook(classLoader: ClassLoader) {
+        hookNotificationRowAppIcon(classLoader)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             classLoader.findClass("com.android.systemui.statusbar.notification.icon.IconManager")
                 .hookAllMethods("setIcon") {
@@ -67,6 +70,42 @@ class HookSystemUI {
                     result = true
                 }
             }
+        }
+    }
+
+    /**
+     * Android 16's notification redesign normally replaces the small icon in a notification row
+     * with the application's launcher icon. In MessagingStyle notifications that launcher icon is
+     * also drawn as the badge over the conversation avatar. Keep MiPush-proxied QQ notifications
+     * on the small-icon path so the bundled (or user-selected) monochrome icon is used for that
+     * badge, matching the pre-redesign Android behavior.
+     */
+    private fun hookNotificationRowAppIcon(classLoader: ClassLoader) {
+        if (Build.VERSION.SDK_INT < 36) return
+
+        try {
+            classLoader.findClass(
+                "com.android.systemui.statusbar.notification.row.icon.NotificationIconStyleProviderImpl"
+            ).hookMethod(
+                "shouldShowAppIcon",
+                StatusBarNotification::class.java,
+                Context::class.java
+            ) {
+                doBefore {
+                    val sbn = args[0] as StatusBarNotification
+                    if (sbn.packageName == "com.tencent.mobileqq" &&
+                        sbn.tag == "mipush_com.tencent.mobileqq"
+                    ) {
+                        // Returning false makes NotificationRowIconView use Notification.smallIcon
+                        // instead of loading QQ's full-color launcher icon.
+                        result = false
+                    }
+                }
+            }
+            XLog.d(TAG, "Installed Android 16 QQ conversation badge icon hook")
+        } catch (t: Throwable) {
+            // Keep SystemUI usable on vendor builds that do not contain the AOSP redesign class.
+            XLog.e(TAG, "Unable to install Android 16 QQ conversation badge icon hook", t)
         }
     }
 

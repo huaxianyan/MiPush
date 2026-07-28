@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - pixel-android-16-notification-badge
   pull_request:
 
 permissions:

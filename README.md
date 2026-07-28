@@ -37,6 +37,10 @@
 
 通过 GitHub 反馈 MiPushFramework 的问题时请到[这里](https://github.com/NihilityT/MiPushFramework/issues)反馈
 
+### QQ 自定义通知图标
+
+本分支不为 QQ 自动提供或强制启用兜底图标，默认行为与上游一致。用户开启“自定义通知图标”并为 `com.tencent.mobileqq` 配置图标后，Android 16 通知中联系人头像右下角的小图标会使用该自定义图标，而不是 QQ 的启动器图标；联系人或群头像本身保持不变。未开启该选项或未配置 QQ 图标时不会进行这项处理。
+
 ### GitHub Actions 构建
 
 在仓库的 **Actions → Build installable APK → Run workflow** 中可以手动构建。构建成功后，在运行详情页的 **Artifacts** 区域下载 `MiPush-*-debug`，解压后即可获得可安装的 Debug APK。构建产物保留 30 天。

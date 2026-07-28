@@ -9,6 +9,11 @@ import one.yufz.hmspush.hook.hms.nm.INotificationManager
 import one.yufz.hmspush.hook.util.newBuilder
 
 class IconHandler : NotificationHandler {
+    companion object {
+        private const val QQ_PACKAGE_NAME = "com.tencent.mobileqq"
+        private const val EXTRA_PREFER_SMALL_ICON = "android.app.preferSmallIcon"
+    }
+
     override fun careAbout(manager: INotificationManager, context: Context, packageName: String, id: Int, notification: Notification): Boolean {
         return Prefs.prefModel.useCustomIcon
     }
@@ -26,7 +31,14 @@ class IconHandler : NotificationHandler {
                 }
             }
 
-            newNotification = builder.build()
+            newNotification = builder.build().apply {
+                if (packageName == QQ_PACKAGE_NAME) {
+                    // Android 16 normally shows QQ's launcher icon in the badge at the bottom-right
+                    // of the conversation avatar. Only when the user-configured icon was actually
+                    // loaded, ask SystemUI to use this notification's custom smallIcon there.
+                    extras.putBoolean(EXTRA_PREFER_SMALL_ICON, true)
+                }
+            }
         }
         super.handle(chain, manager, context, packageName, id, newNotification)
     }

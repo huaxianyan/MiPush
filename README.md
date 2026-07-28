@@ -37,9 +37,9 @@
 
 通过 GitHub 反馈 MiPushFramework 的问题时请到[这里](https://github.com/NihilityT/MiPushFramework/issues)反馈
 
-### QQ 自定义通知图标
+### Pixel Android 16 通知图标实验
 
-本分支不为 QQ 提供图标，也不替换通知原有的小图标。图标由 MiPushFramework 的自定义图标 JSON 生成；MiPush 在拦截 MiPushFramework 发布 `com.tencent.mobileqq` 的 `MessagingStyle` 通知后，只加入 Android 16 的图标选择标记，让联系人头像右下角使用通知中已经存在的 `smallIcon`，而不是 QQ 的启动器图标。该处理不重建通知，也不修改联系人或群头像。
+此分支专门处理 Pixel Android 16 `SystemUIGoogle` 的通知图标重设计，不作为通用 MiPush 行为。MiPushFramework 仍负责通过自定义图标 JSON 生成通知的 `smallIcon`；本分支仅在 Pixel 的最终 `NotificationIconProvider.getIconType()` 决策中，让 MiPush 代理的 QQ 会话通知使用现有 `smallIcon`，并保持联系人或群头像不变。
 
 ### GitHub Actions 构建
 

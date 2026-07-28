@@ -39,7 +39,7 @@
 
 ### Pixel Android 16 通知图标实验
 
-此分支专门处理 Pixel Android 16 `SystemUIGoogle` 的通知图标重设计，不作为通用 MiPush 行为。MiPushFramework 仍负责通过自定义图标 JSON 生成通知的 `smallIcon`；本分支仅在 Pixel 的最终 `NotificationIconProvider.getIconType()` 决策中，让 MiPush 代理的 QQ 会话通知使用现有 `smallIcon`，并保持联系人或群头像不变。
+此分支专门处理 Pixel Android 16 `SystemUIGoogle` 的通知图标重设计，不作为通用 MiPush 行为。MiPushFramework 仍负责通过自定义图标 JSON 生成通知的 `smallIcon`；本分支在 Pixel 的最终 `NotificationIconProvider.getIconType()` 决策中，让 MiPush 代理的 QQ 会话通知使用现有 `smallIcon`。此外仅对 Android 16 的 2025 会话模板，将 40dp 头像恢复为 Pixel 5 时代的 48dp 比例，并把右下角 20dp 徽标内的小图标边距从 2dp 调整为 4dp；联系人或群头像内容本身保持不变。
 
 ### GitHub Actions 构建
 

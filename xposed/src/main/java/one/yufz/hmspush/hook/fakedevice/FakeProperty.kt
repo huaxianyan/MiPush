@@ -15,6 +15,8 @@ import one.yufz.xposed.HookContext
 import one.yufz.xposed.findClass
 import one.yufz.xposed.hookMethod
 import one.yufz.xposed.set
+import java.lang.reflect.Field
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 private const val TAG = "FakeProperties"
@@ -60,6 +62,7 @@ fun fakeProperty(vararg properties: Property) {
 
 private val propertyMap: MutableMap<String, String> = HashMap()
 private val hooked = AtomicBoolean(false)
+private val loggedSpoofs = ConcurrentHashMap.newKeySet<String>()
 
 fun fakeProperty(vararg properties: Pair<String, String>) {
     propertyMap.putAll(properties)
@@ -79,7 +82,10 @@ private fun installPropertyHooksIfNeeded() {
     val stringPropertyCallback: HookContext.() -> Unit = {
         doBefore {
             val key = args[0] as String
-            propertyMap[key]?.let { result = it }
+            propertyMap[key]?.let {
+                logSpoofOnce("get", key, it)
+                result = it
+            }
         }
     }
 
@@ -96,19 +102,31 @@ private fun installPropertyHooksIfNeeded() {
     // between Android releases without aborting the remaining spoofing setup.
     hookOptional("native_get", String::class.java) {
         val key = args[0] as String
-        propertyMap[key]?.let { result = it }
+        propertyMap[key]?.let {
+            logSpoofOnce("native_get", key, it)
+            result = it
+        }
     }
     hookOptional("native_get", String::class.java, String::class.java) {
         val key = args[0] as String
-        propertyMap[key]?.let { result = it }
+        propertyMap[key]?.let {
+            logSpoofOnce("native_get_with_default", key, it)
+            result = it
+        }
     }
     hookOptional("native_get_int", String::class.java, Int::class.javaPrimitiveType!!) {
         val key = args[0] as String
-        propertyMap[key]?.toIntOrNull()?.let { result = it }
+        propertyMap[key]?.toIntOrNull()?.let {
+            logSpoofOnce("native_get_int", key, it.toString())
+            result = it
+        }
     }
     hookOptional("native_get_long", String::class.java, Long::class.javaPrimitiveType!!) {
         val key = args[0] as String
-        propertyMap[key]?.toLongOrNull()?.let { result = it }
+        propertyMap[key]?.toLongOrNull()?.let {
+            logSpoofOnce("native_get_long", key, it.toString())
+            result = it
+        }
     }
 
     Runtime::class.java.hookMethod("exec", String::class.java) {
@@ -143,6 +161,12 @@ private fun hookOptional(
     }
 }
 
+private fun logSpoofOnce(accessor: String, key: String, value: String) {
+    if (loggedSpoofs.add("$accessor:$key")) {
+        XLog.d(TAG, "Spoofed SystemProperties.$accessor($key)=$value")
+    }
+}
+
 private fun fakeBuildFieldsBestEffort() {
     setBuildFieldBestEffort("BRAND", propertyMap[Property.BRAND.key])
     setBuildFieldBestEffort("MANUFACTURER", propertyMap[Property.MANUFACTURER.key])
@@ -156,11 +180,73 @@ private fun setBuildFieldBestEffort(fieldName: String, value: String?) {
 
     try {
         Build::class.java[fieldName] = value
-    } catch (t: Throwable) {
+        return
+    } catch (reflectionFailure: Throwable) {
+        // Android 16 blocks Field.set() for Build's public static final fields.
+        // These fields have no ConstantValue and are read with sget-object by
+        // applications, so writing their ART static-field storage before app
+        // startup restores the behavior older Android releases allowed.
+        if (setStaticObjectFieldWithUnsafe(Build::class.java, fieldName, value)) {
+            XLog.d(TAG, "Set Build.$fieldName with Unsafe after reflection was blocked")
+            return
+        }
+
         XLog.e(
             TAG,
             "Unable to set Build.$fieldName; SystemProperties hooks remain active",
-            t
+            reflectionFailure
         )
     }
+}
+
+private fun setStaticObjectFieldWithUnsafe(
+    declaringClass: Class<*>,
+    fieldName: String,
+    value: Any
+): Boolean {
+    val field = try {
+        declaringClass.getDeclaredField(fieldName).apply { isAccessible = true }
+    } catch (t: Throwable) {
+        XLog.d(TAG, "Unable to resolve $declaringClass.$fieldName for Unsafe: ${t.message}")
+        return false
+    }
+
+    for (unsafeClassName in arrayOf("sun.misc.Unsafe", "jdk.internal.misc.Unsafe")) {
+        try {
+            val unsafeClass = Class.forName(unsafeClassName)
+            val unsafe = unsafeClass.getDeclaredField("theUnsafe").run {
+                isAccessible = true
+                get(null)
+            }
+            val base = unsafeClass.getMethod("staticFieldBase", Field::class.java)
+                .invoke(unsafe, field)
+            val offset = (unsafeClass.getMethod("staticFieldOffset", Field::class.java)
+                .invoke(unsafe, field) as Number).toLong()
+
+            val writer = arrayOf(
+                "putObjectVolatile",
+                "putObject",
+                "putReferenceVolatile",
+                "putReference"
+            ).firstNotNullOfOrNull { methodName ->
+                try {
+                    unsafeClass.getMethod(
+                        methodName,
+                        Any::class.java,
+                        Long::class.javaPrimitiveType!!,
+                        Any::class.java
+                    )
+                } catch (_: Throwable) {
+                    null
+                }
+            } ?: continue
+
+            writer.invoke(unsafe, base, offset, value)
+            if (field.get(null) == value) return true
+        } catch (t: Throwable) {
+            XLog.d(TAG, "$unsafeClassName cannot set Build.$fieldName: ${t.message}")
+        }
+    }
+
+    return false
 }

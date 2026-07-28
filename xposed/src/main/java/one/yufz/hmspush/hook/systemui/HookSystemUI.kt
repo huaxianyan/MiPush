@@ -17,14 +17,11 @@ import one.yufz.xposed.get
 import one.yufz.xposed.hook
 import one.yufz.xposed.hookAllMethods
 import one.yufz.xposed.hookMethod
-import java.util.concurrent.atomic.AtomicBoolean
 
 class HookSystemUI {
     companion object {
         private const val TAG = "HookSystemUI"
     }
-
-    private val loggedQqConversationBadgeOverride = AtomicBoolean(false)
 
     private val ID_ICON_IS_PRE_L: Int by lazy {
         val app = AndroidAppHelper.currentApplication()
@@ -86,7 +83,6 @@ class HookSystemUI {
     private fun hookNotificationRowAppIcon(classLoader: ClassLoader) {
         if (Build.VERSION.SDK_INT < 36) return
 
-        // Hook the policy method first. This is the normal Android 16 AOSP path.
         try {
             classLoader.findClass(
                 "com.android.systemui.statusbar.notification.row.icon.NotificationIconStyleProviderImpl"
@@ -97,74 +93,19 @@ class HookSystemUI {
             ) {
                 doBefore {
                     val sbn = args[0] as StatusBarNotification
-                    if (isMiPushQqNotification(sbn)) {
-                        logQqConversationBadgeOverride("NotificationIconStyleProviderImpl")
+                    if (sbn.packageName == "com.tencent.mobileqq" &&
+                        sbn.tag == "mipush_com.tencent.mobileqq"
+                    ) {
+                        // Returning false makes NotificationRowIconView use Notification.smallIcon
+                        // instead of loading QQ's full-color launcher icon.
                         result = false
                     }
                 }
             }
-            XLog.d(TAG, "Installed Android 16 QQ notification icon policy hook")
+            XLog.d(TAG, "Installed Android 16 QQ conversation badge icon hook")
         } catch (t: Throwable) {
-            XLog.e(TAG, "Unable to install Android 16 QQ notification icon policy hook", t)
-        }
-
-        // Pixel Android 16 creates a per-row provider object and NotificationRowIconView calls it
-        // directly. Hook that final decision as well, rather than relying only on the policy method
-        // (which can be cached or bypassed by vendor SystemUI changes).
-        try {
-            val providerClass = classLoader.findClass(
-                "com.android.systemui.statusbar.notification.row.icon." +
-                    "NotificationRowIconViewInflaterFactory\$createIconProvider\$2"
-            )
-            providerClass.hookMethod("shouldShowAppIcon") {
-                doBefore {
-                    val sbn = findStatusBarNotification(thisObject)
-                    if (sbn != null && isMiPushQqNotification(sbn)) {
-                        logQqConversationBadgeOverride("NotificationRowIconView provider")
-                        result = false
-                    }
-                }
-            }
-            providerClass.hookMethod("getAppIcon") {
-                doBefore {
-                    val sbn = findStatusBarNotification(thisObject)
-                    if (sbn != null && isMiPushQqNotification(sbn)) {
-                        // Defensive fallback: a null app icon also makes the row use smallIcon.
-                        logQqConversationBadgeOverride("NotificationRowIconView app icon loader")
-                        result = null
-                    }
-                }
-            }
-            XLog.d(TAG, "Installed Android 16 QQ per-row app icon hooks")
-        } catch (t: Throwable) {
-            // Keep SystemUI usable on builds whose Kotlin-generated provider class differs.
-            XLog.e(TAG, "Unable to install Android 16 QQ per-row app icon hooks", t)
-        }
-    }
-
-    private fun findStatusBarNotification(provider: Any): StatusBarNotification? {
-        return provider.javaClass.declaredFields.firstNotNullOfOrNull { field ->
-            if (!StatusBarNotification::class.java.isAssignableFrom(field.type)) {
-                null
-            } else {
-                try {
-                    field.isAccessible = true
-                    field.get(provider) as? StatusBarNotification
-                } catch (_: Throwable) {
-                    null
-                }
-            }
-        }
-    }
-
-    private fun isMiPushQqNotification(sbn: StatusBarNotification): Boolean {
-        return sbn.packageName == "com.tencent.mobileqq" &&
-            sbn.tag == "mipush_com.tencent.mobileqq"
-    }
-
-    private fun logQqConversationBadgeOverride(path: String) {
-        if (loggedQqConversationBadgeOverride.compareAndSet(false, true)) {
-            XLog.d(TAG, "Using QQ notification small icon for conversation badge via $path")
+            // Keep SystemUI usable on vendor builds that do not contain the AOSP redesign class.
+            XLog.e(TAG, "Unable to install Android 16 QQ conversation badge icon hook", t)
         }
     }
 

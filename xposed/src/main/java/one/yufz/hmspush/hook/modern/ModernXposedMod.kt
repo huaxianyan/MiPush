@@ -21,6 +21,7 @@ class ModernXposedMod : XposedModule() {
     private var processName: String = "unknown"
 
     override fun onModuleLoaded(param: ModuleLoadedParam) {
+        ModernRuntime.attach(this)
         processName = param.processName
         log(
             Log.INFO,

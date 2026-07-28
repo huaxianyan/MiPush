@@ -3,8 +3,8 @@ package one.yufz.hmspush.hook.fakedevice
 import android.content.pm.PackageInfo
 import android.util.Base64
 import dalvik.system.DexClassLoader
-import de.robv.android.xposed.XC_MethodHook.Unhook
 import de.robv.android.xposed.XposedHelpers
+import io.github.libxposed.api.XposedInterface
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import one.yufz.hmspush.common.HMS_CORE_SIGNATURE
 import one.yufz.hmspush.common.HMS_PACKAGE_NAME
@@ -15,7 +15,7 @@ object FakeHmsSignature {
     private const val TAG = "FakeHmsSignature"
 
     private var verifyApkHashHooked = false
-    private var verifyApkHashUnhook: Unhook? = null
+    private var verifyApkHashUnhook: XposedInterface.HookHandle? = null
 
     fun hook(lpparam: XC_LoadPackage.LoadPackageParam) {
         XLog.d(TAG, "hook() called with: processName = ${lpparam.processName}")

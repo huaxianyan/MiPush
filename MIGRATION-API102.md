@@ -23,7 +23,9 @@ The APK is now declared as a Modern Xposed module with:
 - `targetApiVersion=102`
 - `staticScope=false`
 
-The Legacy `assets/xposed_init` entry and Xposed metadata in `AndroidManifest.xml` have been removed. `ModernXposedMod` currently verifies API 102 lifecycle loading only. It deliberately does not call the old `XposedMod`, because modules targeting API 102 are forbidden from calling `de.robv.android.xposed` APIs.
+The Legacy `assets/xposed_init` entry and Xposed metadata in `AndroidManifest.xml` have been removed. `ModernXposedMod` deliberately does not call the old `XposedMod`, because modules targeting API 102 are forbidden from calling `de.robv.android.xposed` APIs.
+
+The process-local Modern runtime, logging bridge, and central hook DSL now use API 102 interceptors. The compatibility DSL preserves the existing `doBefore`, `doAfter`, `replace`, mutable arguments, result/throwable, and unhook call shapes without invoking Legacy APIs. The first real feature path—Android 16 `SystemProperties`, `Runtime.exec`, and best-effort `Build.*` spoofing—is dispatched directly from `onPackageLoaded()` for selected general client processes. It still requires device validation.
 
 Legacy API remains a compile-only dependency temporarily so unmigrated source files can stay in the tree while they are ported. It must be removed before the migration is considered complete.
 

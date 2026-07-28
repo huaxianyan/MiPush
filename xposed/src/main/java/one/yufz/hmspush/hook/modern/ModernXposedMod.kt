@@ -3,7 +3,9 @@ package one.yufz.hmspush.hook.modern
 import android.util.Log
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface.ModuleLoadedParam
+import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
+import one.yufz.hmspush.hook.fakedevice.fakeAllBuildInProperties
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
 /**
@@ -32,6 +34,27 @@ class ModernXposedMod : XposedModule() {
         )
     }
 
+    override fun onPackageLoaded(param: PackageLoadedParam) {
+        if (shouldInstallGeneralPropertySpoof(param.packageName)) {
+            try {
+                fakeAllBuildInProperties()
+                log(
+                    Log.INFO,
+                    TAG,
+                    "Installed Modern API 102 property spoof: package=${param.packageName}, " +
+                        "process=$processName"
+                )
+            } catch (t: Throwable) {
+                log(
+                    Log.ERROR,
+                    TAG,
+                    "Unable to install Modern API 102 property spoof for ${param.packageName}",
+                    t
+                )
+            }
+        }
+    }
+
     override fun onPackageReady(param: PackageReadyParam) {
         log(
             Log.DEBUG,
@@ -39,6 +62,20 @@ class ModernXposedMod : XposedModule() {
             "Package ready for API 102 migration: package=${param.packageName}, " +
                 "process=$processName"
         )
+    }
+
+    private fun shouldInstallGeneralPropertySpoof(packageName: String): Boolean {
+        if (packageName == "android" ||
+            packageName == "com.android.systemui" ||
+            packageName == "com.google.android.webview" ||
+            packageName == "com.xiaomi.xmsf"
+        ) {
+            return false
+        }
+        if (packageName == "com.tencent.mobileqq" || packageName == "com.tencent.tim") {
+            return processName == packageName || processName.endsWith(":MSF")
+        }
+        return true
     }
 
     override fun onSystemServerStarting(param: SystemServerStartingParam) {

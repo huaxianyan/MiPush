@@ -168,6 +168,7 @@ fun ClassLoader.findClass(className: String): Class<*> =
 fun findClass(className: String, classLoader: ClassLoader?): Class<*> =
     Class.forName(className, false, classLoader)
 
+@JvmName("findMethodExactCompat")
 fun findMethodExact(clazz: Class<*>, name: String, vararg types: Class<*>): Method =
     clazz.findMethodExact(name, *types)
 

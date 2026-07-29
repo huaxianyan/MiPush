@@ -1,6 +1,5 @@
 package one.yufz.hmspush.hook.systemui
 
-import android.app.Notification
 import android.os.Build
 import android.service.notification.StatusBarNotification
 import android.util.TypedValue
@@ -20,7 +19,6 @@ class HookPixelSystemUI {
         private const val QQ_PACKAGE_NAME = "com.tencent.mobileqq"
         private const val QQ_MIPUSH_NOTIFICATION_TAG = "mipush_com.tencent.mobileqq"
         private const val ICON_TYPE_SMALL_ICON = 0
-        private const val ICON_TYPE_LAUNCHER_ICON = 1
         private const val REDESIGN_AVATAR_SIZE_DP = 40
         private const val PIXEL_5_AVATAR_SIZE_DP = 48
         private const val BADGE_SIZE_DP = 20
@@ -29,7 +27,6 @@ class HookPixelSystemUI {
     }
 
     private val loggedQqBadgeOverride = AtomicBoolean(false)
-    private val loggedQqSummaryOverride = AtomicBoolean(false)
     private val loggedQqGeometryAdjustment = AtomicBoolean(false)
 
     fun hook(classLoader: ClassLoader) {
@@ -43,23 +40,15 @@ class HookPixelSystemUI {
             providerClass.hookMethod("getIconType") {
                 doBefore {
                     val sbn = findStatusBarNotification(thisObject)
-                    if (isQqMiPush(sbn)) {
-                        if (isGroupSummary(sbn!!)) {
-                            result = ICON_TYPE_LAUNCHER_ICON
-                            if (loggedQqSummaryOverride.compareAndSet(false, true)) {
-                                XLog.d(
-                                    TAG,
-                                    "Using QQ launcher icon for Pixel notification group summary"
-                                )
-                            }
-                        } else {
-                            result = ICON_TYPE_SMALL_ICON
-                            if (loggedQqBadgeOverride.compareAndSet(false, true)) {
-                                XLog.d(
-                                    TAG,
-                                    "Using QQ small icon via Pixel NotificationIconProvider.getIconType"
-                                )
-                            }
+                    if (sbn?.packageName == QQ_PACKAGE_NAME &&
+                        sbn.tag == QQ_MIPUSH_NOTIFICATION_TAG
+                    ) {
+                        result = ICON_TYPE_SMALL_ICON
+                        if (loggedQqBadgeOverride.compareAndSet(false, true)) {
+                            XLog.d(
+                                TAG,
+                                "Using QQ small icon via Pixel NotificationIconProvider.getIconType"
+                            )
                         }
                     }
                 }
@@ -79,7 +68,9 @@ class HookPixelSystemUI {
                             null
                         } ?: return@doBefore
                         val sbn = findStatusBarNotification(provider)
-                        if (isQqMiPush(sbn) && !isGroupSummary(sbn!!)) {
+                        if (sbn?.packageName == QQ_PACKAGE_NAME &&
+                            sbn.tag == QQ_MIPUSH_NOTIFICATION_TAG
+                        ) {
                             adjustConversationIconGeometry(iconView)
                         }
                     }
@@ -149,12 +140,6 @@ class HookPixelSystemUI {
             value.toFloat(),
             view.resources.displayMetrics
         ).toInt()
-
-    private fun isQqMiPush(sbn: StatusBarNotification?): Boolean =
-        sbn?.packageName == QQ_PACKAGE_NAME && sbn.tag == QQ_MIPUSH_NOTIFICATION_TAG
-
-    private fun isGroupSummary(sbn: StatusBarNotification): Boolean =
-        sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0
 
     private fun findStatusBarNotification(provider: Any): StatusBarNotification? {
         return provider.javaClass.declaredFields.firstNotNullOfOrNull { field ->

@@ -16,6 +16,8 @@ object HookPushNC {
     private const val TAG = "HookPushNC"
 
     private const val TargetClass = "com.nihility.notification.NotificationManagerEx"
+    private const val QQ_PACKAGE_NAME = "com.tencent.mobileqq"
+    private const val QQ_MIPUSH_NOTIFICATION_TAG = "mipush_com.tencent.mobileqq"
 
     private val hookCheck = { HookSystemService.isSystemHookReady }
 
@@ -56,11 +58,18 @@ object HookPushNC {
         ) {
             replace(hookCheck) {
                 tryInvoke {
-                    SystemNotificationManager.notify(
-                        args[0] as String,
-                        args[1] as String?,
-                        args[2] as Int,
+                    val packageName = args[0] as String
+                    val tag = args[1] as String?
+                    val notification = sanitizeQqGroupSummary(
+                        packageName,
+                        tag,
                         args[3] as Notification
+                    )
+                    SystemNotificationManager.notify(
+                        packageName,
+                        tag,
+                        args[2] as Int,
+                        notification
                     )
                 }
             }
@@ -245,6 +254,24 @@ object HookPushNC {
             }
         }
 
+    }
+
+    private fun sanitizeQqGroupSummary(
+        packageName: String,
+        tag: String?,
+        notification: Notification
+    ): Notification {
+        if (packageName != QQ_PACKAGE_NAME ||
+            tag != QQ_MIPUSH_NOTIFICATION_TAG ||
+            notification.flags and Notification.FLAG_GROUP_SUMMARY == 0
+        ) {
+            return notification
+        }
+
+        return notification.clone().apply {
+            extras.remove(Notification.EXTRA_SUB_TEXT)
+            XLog.d(TAG, "Removed duplicate QQ subText from notification group summary")
+        }
     }
 
     private inline fun <R> tryInvoke(invoke: () -> R): R {

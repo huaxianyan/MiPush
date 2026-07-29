@@ -68,6 +68,72 @@ jobs:
             -PversionName="actions-${GITHUB_SHA::7}" \
             :app:assembleRelease
 
+      - name: Verify Modern API 102 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          module_prop='app/src/main/resources/META-INF/xposed/module.prop'
+          if [ ! -f "$module_prop" ]; then
+            echo 'Legacy branch detected; skipping Modern-only checks.'
+            exit 0
+          fi
+
+          shopt -s nullglob
+          apks=(app/build/outputs/apk/release/*.apk)
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "Expected exactly one release APK, found ${#apks[@]}." >&2
+            exit 1
+          fi
+          apk="${apks[0]}"
+          entries="$(unzip -Z1 "$apk")"
+
+          for entry in \
+            META-INF/xposed/java_init.list \
+            META-INF/xposed/module.prop \
+            META-INF/xposed/scope.list; do
+            grep -Fxq "$entry" <<<"$entries" || {
+              echo "Missing Modern module entry: $entry" >&2
+              exit 1
+            }
+          done
+          if grep -Fxq 'assets/xposed_init' <<<"$entries"; then
+            echo 'Legacy assets/xposed_init must not be packaged.' >&2
+            exit 1
+          fi
+
+          unzip -p "$apk" META-INF/xposed/module.prop > packaged-module.prop
+          grep -Fxq 'minApiVersion=102' packaged-module.prop
+          grep -Fxq 'targetApiVersion=102' packaged-module.prop
+          grep -Fxq 'staticScope=false' packaged-module.prop
+
+          badging="$("$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging "$apk")"
+          grep -Fq "package: name='com.neko7ina.mipush.modern'" <<<"$badging"
+          manifest_tree="$("$ANDROID_HOME/build-tools/34.0.0/aapt" \
+            dump xmltree "$apk" AndroidManifest.xml)"
+          if grep -Eq 'xposedmodule|xposedminversion|xposedscope' <<<"$manifest_tree"; then
+            echo 'Legacy Xposed manifest metadata must not be packaged.' >&2
+            exit 1
+          fi
+
+          unzip -p "$apk" 'classes*.dex' > packaged-classes.dex
+          strings packaged-classes.dex > packaged-dex-strings.txt
+          if grep -Eq 'de[./]robv[./]android[./]xposed' packaged-dex-strings.txt; then
+            echo 'Legacy de.robv.android.xposed reference found in release DEX.' >&2
+            exit 1
+          fi
+
+          signer_output="$("$ANDROID_HOME/build-tools/34.0.0/apksigner" \
+            verify --verbose --print-certs "$apk")"
+          printf '%s\n' "$signer_output"
+          if [ -f release.keystore ]; then
+            grep -Fqi \
+              'Signer #1 certificate SHA-256 digest: a73b1a3459fb842f8a39c86ef0fe29e496486361db032085d3345b6b97dd3395' \
+              <<<"$signer_output" || {
+                echo 'Release APK was not signed with the long-term MiPush certificate.' >&2
+                exit 1
+              }
+          fi
+
       - name: Name artifact
         id: artifact
         shell: bash

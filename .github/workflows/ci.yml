@@ -6,6 +6,8 @@ on:
     branches:
       - master
       - modern-api-102-general
+    tags:
+      - 'v*'
   pull_request:
 
 permissions:
@@ -64,8 +66,12 @@ jobs:
       - name: Build installable release APK
         run: |
           chmod +x gradlew
+          version_name="actions-${GITHUB_SHA::7}"
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            version_name="${GITHUB_REF_NAME#v}"
+          fi
           ./gradlew --build-cache --stacktrace \
-            -PversionName="actions-${GITHUB_SHA::7}" \
+            -PversionName="$version_name" \
             :app:assembleRelease
 
       - name: Verify Modern API 102 artifact
@@ -107,7 +113,7 @@ jobs:
           grep -Fxq 'staticScope=false' packaged-module.prop
 
           badging="$("$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging "$apk")"
-          grep -Fq "package: name='com.neko7ina.mipush.modern'" <<<"$badging"
+          grep -Fq "package: name='com.neko7ina.mipush'" <<<"$badging"
           manifest_tree="$("$ANDROID_HOME/build-tools/34.0.0/aapt" \
             dump xmltree "$apk" AndroidManifest.xml)"
           if grep -Eq 'xposedmodule|xposedminversion|xposedscope' <<<"$manifest_tree"; then

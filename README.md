@@ -12,9 +12,11 @@
 ### 安装步骤：
 - 从[这里](https://github.com/NihilityT/MiPushFramework/releases/latest)下载并安装`MiPushFramework`，按照指引完成其初始化。
 
-- 下载本模块的最新版本并安装，在 LSPosed 中启用 MiPush 模块，并勾选 「系统框架」、「推送服务」作用域，然后重启设备，[下载地址](https://github.com/NihilityT/MiPush/releases/latest)
+- 本通用版使用 Modern Xposed API 102，需要支持 API 102 的 LSPosed。下载并安装[本仓库最新 Release](https://github.com/huaxianyan/MiPush/releases/latest)，在 LSPosed 中启用 MiPush 模块。
 
-- LSPosed 里 MiPush 模块里勾选你需要支持推送的目标应用（这一步目的是将应用环境伪装成小米设备，如果你使用了其他方式伪装设备，可以不进行这一步），然后重启一到两次目标应用使其注册上推送通道
+- 保留推荐作用域中的「系统框架」、「系统界面（SystemUI）」和「推送服务（com.xiaomi.xmsf）」，然后重启设备。SystemUI 作用域用于兼容 HyperOS 的焦点通知策略；标准 Android 的基础推送与通知发布不依赖该视觉策略 Hook。
+
+- LSPosed 里 MiPush 模块中勾选你需要支持推送的目标应用（这一步目的是将应用环境伪装成小米设备，如果你使用了其他方式伪装设备，可以不进行这一步），然后重启一到两次目标应用使其注册上推送通道
 
 - 杀掉应用测试推送是否生效（可以使用QQ、酷安测试）
 　　
@@ -37,11 +39,19 @@
 
 通过 GitHub 反馈 MiPushFramework 的问题时请到[这里](https://github.com/NihilityT/MiPushFramework/issues)反馈
 
+### 版本分支
+
+- `master`：Modern Xposed API 102 通用发行版。
+- `legacy-api-82-general`：冻结的 Legacy 通用版，保留用于查阅和回退分析。
+- `pixel-android-16-notification-badge`：冻结的 Pixel Android 16 Legacy 视觉适配版。
+
+不要在相同 LSPosed 作用域中同时启用通用版和 Pixel Legacy 版。
+
 ### GitHub Actions 构建
 
-在仓库的 **Actions → Build installable APK → Run workflow** 中可以手动构建。构建成功后，在运行详情页的 **Artifacts** 区域下载 `MiPush-*-debug`，解压后即可获得可安装的 Debug APK。构建产物保留 30 天。
+在仓库的 **Actions → Build installable APK → Run workflow** 中可以手动构建。构建成功后，在运行详情页的 **Artifacts** 区域下载 `MiPush-*-release`，解压后即可获得可安装 APK。构建产物保留 30 天。
 
-未配置签名 Secrets 时，Actions 会使用临时 Debug 签名，通常不能直接覆盖官方签名版本，需要先卸载原应用。若需要让多次构建保持同一签名，可以在仓库 Secrets 中配置 `SIGNING_KEY`（Base64 格式）、`KEY_STORE_PASSWORD`、`ALIAS` 和 `KEY_PASSWORD`。
+未配置签名 Secrets 时，Actions 会使用临时 Debug 签名，不能直接覆盖正式 Release。仓库正式构建使用私有 Secrets 中的长期签名，并在 CI 中校验证书、Modern API 102 模块声明、包名以及 APK 中不存在 Legacy Xposed API。
 
 ### License
 

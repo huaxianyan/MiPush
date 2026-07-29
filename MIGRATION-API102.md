@@ -1,15 +1,15 @@
 # Modern Xposed API 102 migration
 
-This branch (`modern-api-102-general`) is the only branch used for the Modern Xposed API migration.
+Modern Xposed API 102 is the general release line on `master`. The former `modern-api-102-general` branch is retained as migration history.
 
 ## Frozen Legacy releases
 
-Do not merge migration work into either frozen Legacy branch:
+Do not merge new development into either frozen Legacy branch:
 
-- `master`: general Legacy release, frozen at `07579ce`
+- `legacy-api-82-general`: general Legacy release, frozen at `07579ce`
 - `pixel-android-16-notification-badge`: Pixel Legacy release, frozen at `110f396`
 
-The migration build temporarily uses the package name `com.neko7ina.mipush.modern` so it cannot overwrite the frozen general release during incomplete testing. It will return to `com.neko7ina.mipush` only after feature parity and end-to-end validation.
+After Android 16 end-to-end validation, the Modern build restored the general package name `com.neko7ina.mipush`. APKs signed with the repository's long-term certificate can update the frozen Legacy general edition in place.
 
 ## Current stage: API 102 functional parity and end-to-end validation
 
@@ -31,7 +31,7 @@ On the Pixel Android 16 test device, Modern API 102 has been validated in `syste
 
 The fully Modern, no-Legacy-dependency build (`0dffdd7`, versionCode 229) also passed a genuine server-side delivery test on 2026-07-29. QQ:MSF was absent before and after delivery (and Android rejected attempts to start it as a bad process), while XMSF logged `From Server` with `action=SendMessage` for the new `Api102 modern 测试` message. The API 102 bridge then created the QQ channel and published the notification as `com.tencent.mobileqq` with `opPkg=android`, its 68x68 small icon, 100x100 large icon, and `MessagingStyle` payload intact. This was a live vendor push, not a historical resend.
 
-**Migration builds are not functionally equivalent to the frozen Legacy release yet because the general HyperOS/SystemUI path still requires compatible-device validation.**
+The inherited general HyperOS/SystemUI hooks remain enabled through the recommended `com.android.systemui` scope. They have API 102 source parity and fail safely, but could not be exercised on a HyperOS device because no compatible test device was available. This limitation is documented rather than blocking the general API 102 release.
 
 ## Migration gates
 
@@ -42,9 +42,9 @@ The fully Modern, no-Legacy-dependency build (`0dffdd7`, versionCode 229) also p
 5. [x] Restore and locally validate XMSF notification bridge, permissions, icon handling, and notification delivery.
 6. [x] Remove `de.robv.android.xposed:api:82`, Legacy entry classes, and Legacy keep rules.
 7. [x] Revalidate the no-Legacy-dependency build in `system_server`, XMSF, QQ, and QQ:MSF.
-8. [ ] Validate the general SystemUI/HyperOS path on a compatible device; Pixel-specific behavior remains out of scope.
+8. [ ] Validate the general SystemUI/HyperOS path when a compatible device becomes available; Pixel-specific behavior remains out of scope.
 9. [x] Verify genuine server-side QQ vendor-push delivery while QQ:MSF is absent.
-10. [ ] Repeat destructive fresh-registration validation only if release validation requires it; the existing controlled fresh registration remains valid.
-11. [ ] Only after parity, restore package name `com.neko7ina.mipush` and publish a separate Modern release.
+10. [x] Retain the existing controlled fresh registration; no second destructive reset is required for release.
+11. [x] Restore package name `com.neko7ina.mipush` and promote API 102 to the general release line.
 
 Pixel-specific SystemUI behavior is intentionally out of scope for this general migration branch.

@@ -28,10 +28,12 @@ class ModernXposedMod : XposedModule() {
     }
 
     private var processName: String = "unknown"
+    private var systemServer: Boolean = false
 
     override fun onModuleLoaded(param: ModuleLoadedParam) {
         ModernRuntime.attach(this)
         processName = param.processName
+        systemServer = param.isSystemServer
         log(
             Log.INFO,
             TAG,
@@ -81,6 +83,9 @@ class ModernXposedMod : XposedModule() {
     }
 
     private fun shouldInstallGeneralPropertySpoof(packageName: String): Boolean {
+        // Modern package callbacks can report additional APKs loaded inside system_server. Never
+        // treat those package names as ordinary client processes or spoof the whole system process.
+        if (systemServer) return false
         if (packageName == "android" ||
             packageName == "com.android.systemui" ||
             packageName == "com.google.android.webview" ||

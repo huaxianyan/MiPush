@@ -27,9 +27,11 @@ The Legacy `assets/xposed_init` entry, Xposed metadata in `AndroidManifest.xml`,
 
 The process-local Modern runtime, logging bridge, and central hook DSL use API 102 interceptors. The compatibility DSL preserves the existing `doBefore`, `doAfter`, `replace`, mutable arguments, result/throwable, and unhook call shapes without invoking Legacy APIs. General fake-device dispatch now uses a framework-neutral `LoadedPackage` value.
 
-On the Pixel Android 16 test device, Modern API 102 has been validated in `system_server`, XMSF, QQ, and QQ:MSF. Android 16 `SystemProperties` spoofing works, system_server is explicitly excluded from device spoofing, and a MiPushFramework historical resend successfully exercised notification channel creation, query, publish, and cancel with the QQ package identity. This local resend is not evidence of genuine server-side vendor push.
+On the Pixel Android 16 test device, Modern API 102 has been validated in `system_server`, XMSF, QQ, and QQ:MSF. Android 16 `SystemProperties` spoofing works, system_server is explicitly excluded from device spoofing, and a MiPushFramework historical resend successfully exercised notification channel creation, query, publish, and cancel with the QQ package identity.
 
-**Migration builds are not functionally equivalent to the frozen Legacy release yet.**
+The fully Modern, no-Legacy-dependency build (`0dffdd7`, versionCode 229) also passed a genuine server-side delivery test on 2026-07-29. QQ:MSF was absent before and after delivery (and Android rejected attempts to start it as a bad process), while XMSF logged `From Server` with `action=SendMessage` for the new `Api102 modern 测试` message. The API 102 bridge then created the QQ channel and published the notification as `com.tencent.mobileqq` with `opPkg=android`, its 68x68 small icon, 100x100 large icon, and `MessagingStyle` payload intact. This was a live vendor push, not a historical resend.
+
+**Migration builds are not functionally equivalent to the frozen Legacy release yet because the general HyperOS/SystemUI path still requires compatible-device validation.**
 
 ## Migration gates
 
@@ -39,9 +41,10 @@ On the Pixel Android 16 test device, Modern API 102 has been validated in `syste
 4. [x] Restore Android 16 `SystemProperties` hooks and `Build.*` Unsafe fallback code paths.
 5. [x] Restore and locally validate XMSF notification bridge, permissions, icon handling, and notification delivery.
 6. [x] Remove `de.robv.android.xposed:api:82`, Legacy entry classes, and Legacy keep rules.
-7. [ ] Revalidate the no-Legacy-dependency build in `system_server`, XMSF, QQ, and QQ:MSF.
+7. [x] Revalidate the no-Legacy-dependency build in `system_server`, XMSF, QQ, and QQ:MSF.
 8. [ ] Validate the general SystemUI/HyperOS path on a compatible device; Pixel-specific behavior remains out of scope.
-9. [ ] Verify fresh QQ MiPush registration and genuine server-side vendor-push delivery.
-10. [ ] Only after parity, restore package name `com.neko7ina.mipush` and publish a separate Modern release.
+9. [x] Verify genuine server-side QQ vendor-push delivery while QQ:MSF is absent.
+10. [ ] Repeat destructive fresh-registration validation only if release validation requires it; the existing controlled fresh registration remains valid.
+11. [ ] Only after parity, restore package name `com.neko7ina.mipush` and publish a separate Modern release.
 
 Pixel-specific SystemUI behavior is intentionally out of scope for this general migration branch.

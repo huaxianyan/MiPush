@@ -1,14 +1,14 @@
 package one.yufz.hmspush.hook.system
 
-import android.app.AndroidAppHelper
+import one.yufz.hmspush.hook.modern.ProcessContext
 import android.app.Notification
 import android.app.NotificationChannelGroup
 import android.content.Context
 import android.os.Binder
 import android.os.Build
 import android.os.Process
-import de.robv.android.xposed.XposedHelpers.findClass
-import de.robv.android.xposed.XposedHelpers.findMethodExact
+import one.yufz.xposed.findClass
+import one.yufz.xposed.findMethodExact
 import one.yufz.hmspush.common.ANDROID_PACKAGE_NAME
 import one.yufz.hmspush.common.HMS_PACKAGE_NAME
 import one.yufz.hmspush.hook.XLog
@@ -29,7 +29,7 @@ object NmsPermissionHooker {
 
     private fun getPackageUid(packageName: String) = getContext().packageManager.getPackageUid(packageName, 0)
 
-    private fun getContext(): Context = AndroidAppHelper.currentApplication()
+    private fun getContext(): Context = ProcessContext.require()
 
     private fun tryHookPermission(packageName: String): Boolean {
         if (fromHms()) {

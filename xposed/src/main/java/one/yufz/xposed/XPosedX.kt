@@ -18,7 +18,7 @@ fun Class<*>.hookMethod(
     vararg parameterTypes: Class<*>,
     callback: HookCallback
 ): XposedInterface.HookHandle =
-    findMethodExact(this, methodName, parameterTypes).installHook(callback)
+    findMethodExact(methodName, *parameterTypes).installHook(callback)
 
 fun Class<*>.hookConstructor(
     vararg parameterTypes: Class<*>,
@@ -145,7 +145,7 @@ fun Any.callMethod(
     methodName: String,
     parameterTypes: Array<Class<*>>,
     vararg args: Any?
-): Any? = findMethodExact(javaClass, methodName, parameterTypes).invokeUnwrapped(this, args)
+): Any? = javaClass.findMethodExact(methodName, *parameterTypes).invokeUnwrapped(this, args)
 
 fun Class<*>.callStaticMethod(methodName: String, vararg args: Any?): Any? =
     findCompatibleMethod(this, methodName, args, requireStatic = true).invokeUnwrapped(null, args)
@@ -154,7 +154,7 @@ fun Class<*>.callStaticMethod(
     methodName: String,
     parameterTypes: Array<Class<*>>,
     vararg args: Any?
-): Any? = findMethodExact(this, methodName, parameterTypes).invokeUnwrapped(null, args)
+): Any? = findMethodExact(methodName, *parameterTypes).invokeUnwrapped(null, args)
 
 fun Class<*>.newInstance(vararg args: Any?): Any =
     findCompatibleConstructor(this, args).newInstanceUnwrapped(args)
@@ -164,6 +164,12 @@ fun Class<*>.newInstance(parameterTypes: Array<Class<*>>, vararg args: Any?): An
 
 fun ClassLoader.findClass(className: String): Class<*> =
     Class.forName(className, false, this)
+
+fun findClass(className: String, classLoader: ClassLoader?): Class<*> =
+    Class.forName(className, false, classLoader)
+
+fun findMethodExact(clazz: Class<*>, name: String, vararg types: Class<*>): Method =
+    clazz.findMethodExact(name, *types)
 
 inline fun <reified T> Any.getOrNull(name: String): T? = getField(name, T::class.java)
 
@@ -219,8 +225,8 @@ private fun findField(clazz: Class<*>, fieldName: String): Field {
     throw NoSuchFieldException("$clazz#$fieldName")
 }
 
-private fun findMethodExact(clazz: Class<*>, name: String, types: Array<out Class<*>>): Method {
-    var current: Class<*>? = clazz
+fun Class<*>.findMethodExact(name: String, vararg types: Class<*>): Method {
+    var current: Class<*>? = this
     while (current != null) {
         try {
             return current.getDeclaredMethod(name, *types).apply { isAccessible = true }
@@ -228,7 +234,7 @@ private fun findMethodExact(clazz: Class<*>, name: String, types: Array<out Clas
             current = current.superclass
         }
     }
-    throw NoSuchMethodException("$clazz#$name(${types.joinToString { it.name }})")
+    throw NoSuchMethodException("$this#$name(${types.joinToString { it.name }})")
 }
 
 private fun findCompatibleMethod(

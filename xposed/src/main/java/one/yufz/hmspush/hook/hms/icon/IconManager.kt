@@ -1,6 +1,6 @@
 package one.yufz.hmspush.hook.hms.icon
 
-import android.app.AndroidAppHelper
+import one.yufz.hmspush.hook.modern.ProcessContext
 import android.content.Context
 import android.os.ParcelFileDescriptor
 import android.util.LruCache
@@ -12,7 +12,7 @@ import one.yufz.hmspush.common.model.IconModel
 import java.io.File
 
 object IconManager {
-    private val context = AndroidAppHelper.currentApplication()
+    private val context = ProcessContext.require()
 
     private val iconDir = File(context.filesDir, "hms_push/icons")
 

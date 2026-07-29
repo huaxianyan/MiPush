@@ -1,6 +1,6 @@
 package one.yufz.hmspush.hook.hms.nm
 
-import android.app.AndroidAppHelper
+import one.yufz.hmspush.hook.modern.ProcessContext
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,7 +14,7 @@ class SelfNotificationManager : INotificationManager {
         private const val TAG = "SelfNotificationManager"
     }
 
-    private val notificationManager = AndroidAppHelper.currentApplication()
+    private val notificationManager = ProcessContext.require()
         .getSystemService(NotificationManager::class.java)
 
     override fun areNotificationsEnabled(packageName: String, userId: Int): Boolean {
@@ -39,7 +39,7 @@ class SelfNotificationManager : INotificationManager {
 
     private fun getApplicationName(packageName: String): CharSequence? {
         try {
-            val pm = AndroidAppHelper.currentApplication().packageManager
+            val pm = ProcessContext.require().packageManager
             return pm.getApplicationInfo(packageName, 0).loadLabel(pm)
         } catch (e: Throwable) {
             XLog.e(TAG, "getApplicationName: error", e)

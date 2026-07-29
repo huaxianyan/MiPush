@@ -5,9 +5,10 @@ import android.os.Binder
 import android.os.Build
 import android.service.notification.StatusBarNotification
 import com.huawei.android.app.NotificationManagerEx
-import de.robv.android.xposed.XposedHelpers
+import one.yufz.xposed.ModernHelpers as XposedHelpers
 import one.yufz.hmspush.common.ANDROID_PACKAGE_NAME
 import one.yufz.hmspush.hook.XLog
+import one.yufz.hmspush.hook.modern.ProcessContext
 import one.yufz.xposed.callMethod
 import one.yufz.xposed.callStaticMethod
 import one.yufz.xposed.setField
@@ -27,11 +28,11 @@ object SystemNotificationManager {
     private val notificationManager: Any = NotificationManager::class.java.callStaticMethod("getService")!!
 
     private fun getUid(packageName: String): Int {
-        return AndroidAppHelper.currentApplication().packageManager.getPackageUid(packageName, 0)
+        return ProcessContext.require().packageManager.getPackageUid(packageName, 0)
     }
 
     private fun getUserId(): Int {
-        return AndroidAppHelper.currentApplication().callMethod("getUserId") as Int? ?: 0
+        return ProcessContext.require().callMethod("getUserId") as Int? ?: 0
     }
 
     fun notify(

@@ -1,6 +1,6 @@
 package one.yufz.hmspush.hook.systemui
 
-import android.app.AndroidAppHelper
+import one.yufz.hmspush.hook.modern.ProcessContext
 import android.app.Notification
 import android.content.Context
 import android.content.pm.ApplicationInfo
@@ -23,7 +23,7 @@ class HookSystemUI {
     }
 
     private val ID_ICON_IS_PRE_L: Int by lazy {
-        val app = AndroidAppHelper.currentApplication()
+        val app = ProcessContext.require()
         app.resources.getIdentifier("icon_is_pre_L", "id", app.packageName)
     }
 

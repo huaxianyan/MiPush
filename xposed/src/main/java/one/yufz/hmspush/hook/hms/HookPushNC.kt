@@ -4,8 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationChannelGroup
 import android.service.notification.StatusBarNotification
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.XposedHelpers.ClassNotFoundError
 import one.yufz.hmspush.hook.XLog
 import one.yufz.hmspush.hook.hms.nm.SystemNotificationManager
 import one.yufz.hmspush.hook.system.HookSystemService
@@ -25,7 +23,7 @@ object HookPushNC {
         return try {
             classLoader.findClass(TargetClass)
             true
-        } catch (e: ClassNotFoundError) {
+        } catch (e: ClassNotFoundException) {
             false
         }
     }
@@ -252,10 +250,6 @@ object HookPushNC {
     private inline fun <R> tryInvoke(invoke: () -> R): R {
         try {
             return invoke()
-        } catch (e: XposedHelpers.InvocationTargetError) {
-            XLog.e(TAG, "tryInvoke: ", e)
-            XLog.e(TAG, "tryInvoke targetException: ", e.cause)
-            throw e.cause ?: e
         } catch (e: InvocationTargetException) {
             XLog.e(TAG, "tryInvoke: ", e)
             XLog.e(TAG, "tryInvoke targetException: ", e.targetException)

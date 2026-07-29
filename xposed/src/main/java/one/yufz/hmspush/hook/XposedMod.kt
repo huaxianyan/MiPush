@@ -44,7 +44,7 @@ class XposedMod : IXposedHookLoadPackage {
 
         if (lpparam.packageName == HMS_PACKAGE_NAME) {
             if (lpparam.processName == HMS_CORE_PROCESS) {
-                HookHMS().hook(lpparam)
+                HookHMS().hook(lpparam.classLoader)
             }
             return
         }

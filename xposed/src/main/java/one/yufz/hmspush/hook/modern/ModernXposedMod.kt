@@ -1,11 +1,18 @@
 package one.yufz.hmspush.hook.modern
 
+import android.app.Application
+import android.content.Context
 import android.util.Log
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface.ModuleLoadedParam
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
+import one.yufz.hmspush.common.HMS_CORE_PROCESS
+import one.yufz.hmspush.common.HMS_PACKAGE_NAME
 import one.yufz.hmspush.hook.fakedevice.fakeAllBuildInProperties
+import one.yufz.hmspush.hook.hms.HookHMS
+import one.yufz.hmspush.hook.system.HookSystemService
+import one.yufz.xposed.hookMethod
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
 /**
@@ -56,6 +63,15 @@ class ModernXposedMod : XposedModule() {
     }
 
     override fun onPackageReady(param: PackageReadyParam) {
+        if (param.packageName == HMS_PACKAGE_NAME && processName == HMS_CORE_PROCESS) {
+            installApplicationContextCapture()
+            try {
+                HookHMS().hook(param.classLoader)
+                log(Log.INFO, TAG, "Installed Modern API 102 XMSF notification bridge hooks")
+            } catch (t: Throwable) {
+                log(Log.ERROR, TAG, "Unable to install Modern API 102 XMSF hooks", t)
+            }
+        }
         log(
             Log.DEBUG,
             TAG,
@@ -78,11 +94,21 @@ class ModernXposedMod : XposedModule() {
         return true
     }
 
+    private fun installApplicationContextCapture() {
+        Application::class.java.hookMethod("attach", Context::class.java) {
+            doAfter {
+                ProcessContext.attach(args[0] as Context)
+                log(Log.DEBUG, TAG, "Captured XMSF application context")
+            }
+        }
+    }
+
     override fun onSystemServerStarting(param: SystemServerStartingParam) {
-        log(
-            Log.DEBUG,
-            TAG,
-            "System server ready for API 102 migration: classLoader=${param.classLoader}"
-        )
+        try {
+            HookSystemService().hook(param.classLoader)
+            log(Log.INFO, TAG, "Installed Modern API 102 system_server hooks")
+        } catch (t: Throwable) {
+            log(Log.ERROR, TAG, "Unable to install Modern API 102 system_server hooks", t)
+        }
     }
 }

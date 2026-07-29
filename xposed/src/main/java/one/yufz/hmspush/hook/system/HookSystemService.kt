@@ -1,13 +1,13 @@
 package one.yufz.hmspush.hook.system
 
-import android.app.AndroidAppHelper
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Binder
-import de.robv.android.xposed.XposedHelpers
+import one.yufz.hmspush.hook.modern.ProcessContext
 import one.yufz.hmspush.common.IS_SYSTEM_HOOK_READY
 import one.yufz.hmspush.hook.XLog
 import one.yufz.xposed.callMethod
+import one.yufz.xposed.findClass
 import one.yufz.xposed.get
 import one.yufz.xposed.hookMethod
 
@@ -17,7 +17,7 @@ class HookSystemService {
 
         val isSystemHookReady: Boolean by lazy {
             try {
-                val nm = AndroidAppHelper.currentApplication().getSystemService(NotificationManager::class.java)
+                val nm = ProcessContext.require().getSystemService(NotificationManager::class.java)
                 nm.callMethod("isSystemConditionProviderEnabled", IS_SYSTEM_HOOK_READY) as Boolean
             } catch (t: Throwable) {
                 XLog.e(TAG, "isSystemHookReady error", t)
@@ -28,12 +28,13 @@ class HookSystemService {
     }
 
     fun hook(classLoader: ClassLoader) {
-        val classNotificationManagerService = XposedHelpers.findClass("com.android.server.notification.NotificationManagerService", classLoader)
+        val classNotificationManagerService = classLoader.findClass("com.android.server.notification.NotificationManagerService")
 
         classNotificationManagerService.hookMethod("onStart") {
             doAfter {
                 XLog.d(TAG, "onStart invoked")
                 val context = thisObject.callMethod("getContext") as Context
+                ProcessContext.attach(context)
                 //KeepHmsAlive(context).start()
                 val stubClass = thisObject.get<Any>("mService").javaClass
                 hookPermission(stubClass)
@@ -52,7 +53,7 @@ class HookSystemService {
         }
 
 
-        val classShortcutService = XposedHelpers.findClass("com.android.server.pm.ShortcutService", classLoader)
+        val classShortcutService = classLoader.findClass("com.android.server.pm.ShortcutService")
         ShortcutPermissionHooker.hook(classShortcutService)
     }
 

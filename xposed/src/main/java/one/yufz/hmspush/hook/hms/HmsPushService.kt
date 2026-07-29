@@ -1,6 +1,6 @@
 package one.yufz.hmspush.hook.hms
 
-import android.app.AndroidAppHelper
+import one.yufz.hmspush.hook.modern.ProcessContext
 import kotlinx.coroutines.runBlocking
 import one.yufz.hmspush.common.BridgeUri
 import one.yufz.hmspush.common.HmsPushInterface
@@ -17,11 +17,11 @@ object HmsPushService : HmsPushInterface.Stub() {
     private const val TAG = "HmsPushService"
 
     fun notifyPushSignChanged() {
-        BridgeUri.PUSH_SIGN.notifyContentChanged(AndroidAppHelper.currentApplication())
+        BridgeUri.PUSH_SIGN.notifyContentChanged(ProcessContext.require())
     }
 
     fun notifyPushHistoryChanged() {
-        BridgeUri.PUSH_HISTORY.notifyContentChanged(AndroidAppHelper.currentApplication())
+        BridgeUri.PUSH_HISTORY.notifyContentChanged(ProcessContext.require())
     }
 
     override fun getModuleVersion(): ModuleVersionModel {

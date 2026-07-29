@@ -32,6 +32,11 @@ def getVersionCode = { ->
     }
 }
 
+def getConfiguredVersionCode = { ->
+    def configuredVersionCode = project.findProperty('versionCode')
+    return configuredVersionCode != null ? Integer.parseInt(configuredVersionCode.toString()) : getVersionCode()
+}
+
 def getVersionName = { ->
     String versionName  = project.findProperty('versionName') ?: getVersionNameFromGit() ?: "VersionNameError"
     versionName = increaseVersionForPreRelease(versionName)
@@ -66,7 +71,7 @@ private String getVersionNameFromGit() {
 }
 
 ext {
-    gitVersionCode = getVersionCode()
+    gitVersionCode = getConfiguredVersionCode()
     gitVersionName = getVersionName()
     // Pixel API 102 keeps the corrected Pixel edition identity so it can update the frozen
     // Pixel Legacy release without colliding with the general edition.

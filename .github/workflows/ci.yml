@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - modern-api-102-general
+      - modern-api-102-pixel-android16
     tags:
       - 'v*'
   pull_request:
@@ -113,7 +114,12 @@ jobs:
           grep -Fxq 'staticScope=false' packaged-module.prop
 
           badging="$("$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging "$apk")"
-          grep -Fq "package: name='com.neko7ina.mipush'" <<<"$badging"
+          expected_package="$(sed -n 's/.*APPLICATION_ID = "\([^"]*\)"/\1/p' build.gradle)"
+          if [ -z "$expected_package" ]; then
+            echo 'Unable to determine expected application ID.' >&2
+            exit 1
+          fi
+          grep -Fq "package: name='$expected_package'" <<<"$badging"
           manifest_tree="$("$ANDROID_HOME/build-tools/34.0.0/aapt" \
             dump xmltree "$apk" AndroidManifest.xml)"
           if grep -Eq 'xposedmodule|xposedminversion|xposedscope' <<<"$manifest_tree"; then

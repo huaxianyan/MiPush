@@ -12,15 +12,17 @@
 ### 安装步骤：
 - 从[这里](https://github.com/NihilityT/MiPushFramework/releases/latest)下载并安装`MiPushFramework`，按照指引完成其初始化。
 
-- 本通用版使用 Modern Xposed API 102，需要支持 API 102 的 LSPosed。下载并安装[本仓库最新 Release](https://github.com/huaxianyan/MiPush/releases/latest)，在 LSPosed 中启用 MiPush 模块。
+- 本 Pixel 适配版使用 Modern Xposed API 102，需要支持 API 102 的 LSPosed。安装 Pixel 版 APK 后，在 LSPosed 中启用 MiPush 模块。
 
-- 保留推荐作用域中的「系统框架」、「系统界面（SystemUI）」和「推送服务（com.xiaomi.xmsf）」，然后重启设备。SystemUI 作用域用于兼容 HyperOS 的焦点通知策略；标准 Android 的基础推送与通知发布不依赖该视觉策略 Hook。
+- 保留推荐作用域中的「系统框架」、「系统界面（SystemUI）」和「推送服务（com.xiaomi.xmsf）」，然后重启设备。Pixel Android 16 的 QQ 会话头像、右下角 `smallIcon` 角标和 48dp 几何适配依赖 SystemUI 作用域。
 
 - LSPosed 里 MiPush 模块中勾选你需要支持推送的目标应用（这一步目的是将应用环境伪装成小米设备，如果你使用了其他方式伪装设备，可以不进行这一步），然后重启一到两次目标应用使其注册上推送通道
 
 - 杀掉应用测试推送是否生效（可以使用QQ、酷安测试）
 　　
 ### 注意：
+- 本分支的 SystemUI 代码只适配 Pixel Android 16，并按 QQ 包名和 MiPush 通知 tag 严格过滤；不匹配的 SystemUI 构建会安全跳过。
+
 - 并不是所有应用都支持推送，目前测试已支持大部分应用，比如 QQ、酷安等
 
 - **微信不支持**
@@ -41,11 +43,12 @@
 
 ### 版本分支
 
-- `master`：Modern Xposed API 102 通用发行版。
+- `master`：Modern Xposed API 102 通用版。
+- `modern-api-102-pixel-android16`：Modern Xposed API 102 Pixel Android 16 适配版（当前分支）。
 - `legacy-api-82-general`：冻结的 Legacy 通用版，保留用于查阅和回退分析。
 - `pixel-android-16-notification-badge`：冻结的 Pixel Android 16 Legacy 视觉适配版。
 
-不要在相同 LSPosed 作用域中同时启用通用版和 Pixel Legacy 版。
+不要在相同 LSPosed 作用域中同时启用通用版、Modern Pixel 版或 Pixel Legacy 版。
 
 ### GitHub Actions 构建
 

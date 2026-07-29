@@ -68,9 +68,9 @@ private String getVersionNameFromGit() {
 ext {
     gitVersionCode = getVersionCode()
     gitVersionName = getVersionName()
-    // Modern API 102 is the general release line. Keeping the original application ID allows
-    // long-term-signed builds to update the frozen Legacy general edition in place.
-    APPLICATION_ID = "com.neko7ina.mipush"
+    // Pixel API 102 keeps the corrected Pixel edition identity so it can update the frozen
+    // Pixel Legacy release without colliding with the general edition.
+    APPLICATION_ID = "com.neko7ina.mipush.pixel"
 
     COMPILE_SDK = 34
     MIN_SDK = 26

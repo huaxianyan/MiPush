@@ -2,8 +2,8 @@ package one.yufz.hmspush.hook.systemui
 
 import android.content.ComponentName
 import android.content.ContextWrapper
-import de.robv.android.xposed.XposedHelpers
 import one.yufz.hmspush.hook.XLog
+import one.yufz.xposed.findClass
 import one.yufz.xposed.getField
 import one.yufz.xposed.hook
 
@@ -16,9 +16,8 @@ class HookSystemUIPlugin(
 
     fun hook(classLoader: ClassLoader) {
         try {
-            val classPluginFactory = XposedHelpers.findClass(
-                "com.android.systemui.shared.plugins.PluginInstance\$PluginFactory",
-                classLoader
+            val classPluginFactory = classLoader.findClass(
+                "com.android.systemui.shared.plugins.PluginInstance\$PluginFactory"
             )
             classPluginFactory.declaredMethods.find { it.name == "createPluginContext" }!!.hook {
                 doAfter {

@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
-import de.robv.android.xposed.callbacks.XC_LoadPackage
 import one.yufz.xposed.hookMethod
 
 class PinDuoDuo : Common() {
@@ -12,8 +11,8 @@ class PinDuoDuo : Common() {
         private const val TAG = "PddCommon"
     }
 
-    override fun fake(lpparam: XC_LoadPackage.LoadPackageParam): Boolean {
-        super.fake(lpparam)
+    override fun fake(loadedPackage: LoadedPackage): Boolean {
+        super.fake(loadedPackage)
         Application::class.java.hookMethod("attach", Context::class.java) {
             doAfter {
                 val context: Context = thisObject as Context

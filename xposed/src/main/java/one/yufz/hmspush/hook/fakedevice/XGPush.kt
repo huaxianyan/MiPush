@@ -1,11 +1,8 @@
 package one.yufz.hmspush.hook.fakedevice
 
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage
 import one.yufz.hmspush.hook.XLog
 import one.yufz.xposed.findClass
+import one.yufz.xposed.hook
 import java.lang.reflect.Method
 
 open class XGPush : IFakeDevice {
@@ -13,17 +10,17 @@ open class XGPush : IFakeDevice {
         private const val TAG = "FakeForXGPush"
     }
 
-    override fun fake(lpparam: XC_LoadPackage.LoadPackageParam): Boolean {
-        val classLoader = lpparam.classLoader
-
+    override fun fake(loadedPackage: LoadedPackage): Boolean {
+        val classLoader = loadedPackage.classLoader
         XLog.d(TAG, "fake() called with: classLoader = $classLoader")
 
         return try {
-            val classChannelUtils = classLoader.findClass("com.tencent.tpns.baseapi.base.util.ChannelUtils")
+            val classChannelUtils =
+                classLoader.findClass("com.tencent.tpns.baseapi.base.util.ChannelUtils")
             fakeChannels(classChannelUtils)
             true
-        } catch (e: XposedHelpers.ClassNotFoundError) {
-            XLog.e(TAG, "fake ClassNotFoundError", e)
+        } catch (e: ClassNotFoundException) {
+            XLog.e(TAG, "fake ClassNotFoundException", e)
             false
         } catch (e: Throwable) {
             XLog.e(TAG, "fake error: ", e)
@@ -33,28 +30,21 @@ open class XGPush : IFakeDevice {
 
     private fun fakeChannels(classChannelUtils: Class<*>): Boolean {
         XLog.d(TAG, "fakeChannels() called")
-
-        classChannelUtils.declaredMethods.forEach {
-            XposedBridge.hookMethod(it, object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    val method = param.method as Method
-
-                    if (method.name == "getMiuiVersionCode") {
-                        param.result = "13"
-                    } else if (method.name == "getMiuiVersionName") {
-                        param.result = "V130"
-                    } else if (method.name == "isBrandXiaoMi") {
-                        param.result = true
-                    } else if (method.returnType == Boolean::class.java) {
-                        param.result = false
-                    } else if (method.returnType == String::class.java) {
-                        param.result = ""
+        classChannelUtils.declaredMethods.forEach { hookedMethod ->
+            hookedMethod.hook {
+                doBefore {
+                    val method = executable as Method
+                    result = when {
+                        method.name == "getMiuiVersionCode" -> "13"
+                        method.name == "getMiuiVersionName" -> "V130"
+                        method.name == "isBrandXiaoMi" -> true
+                        method.returnType == Boolean::class.java -> false
+                        method.returnType == String::class.java -> ""
+                        else -> return@doBefore
                     }
                 }
-            })
+            }
         }
         return true
     }
-
-
 }

@@ -1,7 +1,7 @@
 package one.yufz.hmspush.hook.systemui
 
-import de.robv.android.xposed.XposedHelpers
 import one.yufz.hmspush.hook.XLog
+import one.yufz.xposed.findClass
 import one.yufz.xposed.hook
 
 class HookNotificationSettingsManager : ISystemUIPluginHooker {
@@ -12,9 +12,8 @@ class HookNotificationSettingsManager : ISystemUIPluginHooker {
     override fun hook(pluginLoader: ClassLoader) {
         try {
             XLog.d(TAG, "hook start")
-            val classNotificationSettingsManager = XposedHelpers.findClass(
-                "miui.systemui.notification.NotificationSettingsManager",
-                pluginLoader
+            val classNotificationSettingsManager = pluginLoader.findClass(
+                "miui.systemui.notification.NotificationSettingsManager"
             )
 
             XLog.d(TAG, "hook method")

@@ -1,10 +1,5 @@
 package one.yufz.hmspush.hook.fakedevice
 
-import android.app.Application
-import android.content.Context
-import android.content.ContextWrapper
-import de.robv.android.xposed.callbacks.XC_LoadPackage
-import one.yufz.hmspush.common.BridgeWrap
 import one.yufz.hmspush.hook.XLog
 import one.yufz.xposed.hookMethod
 
@@ -24,14 +19,18 @@ object FakeDevice {
         "com.ss.android.ugc.aweme" to arrayOf(DouYin::class.java),
     )
 
-    fun fake(lpparam: XC_LoadPackage.LoadPackageParam) {
-        XLog.d(TAG, "fake() called with: packageName = ${lpparam.packageName}, processName = ${lpparam.processName}")
-        if (lpparam.packageName == "com.google.android.webview") {
-            XLog.d(TAG, "fake() called, ignore ${lpparam.packageName}")
+    fun fake(loadedPackage: LoadedPackage) {
+        XLog.d(
+            TAG,
+            "fake() called with: packageName = ${loadedPackage.packageName}, " +
+                "processName = ${loadedPackage.processName}"
+        )
+        if (loadedPackage.packageName == "com.google.android.webview") {
+            XLog.d(TAG, "fake() called, ignore ${loadedPackage.packageName}")
             return
         }
 
-        val fakes = FakeDeviceConfig[lpparam.packageName] ?: Default
-        fakes.forEach { it.newInstance().fake(lpparam) }
+        val fakes = FakeDeviceConfig[loadedPackage.packageName] ?: Default
+        fakes.forEach { it.newInstance().fake(loadedPackage) }
     }
 }

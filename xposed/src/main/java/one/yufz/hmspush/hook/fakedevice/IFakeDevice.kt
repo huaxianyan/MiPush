@@ -1,7 +1,11 @@
 package one.yufz.hmspush.hook.fakedevice
 
-import de.robv.android.xposed.callbacks.XC_LoadPackage
+data class LoadedPackage(
+    val packageName: String,
+    val processName: String,
+    val classLoader: ClassLoader
+)
 
 interface IFakeDevice {
-    fun fake(lpparam: XC_LoadPackage.LoadPackageParam): Boolean
+    fun fake(loadedPackage: LoadedPackage): Boolean
 }

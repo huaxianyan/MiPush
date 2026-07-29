@@ -32,9 +32,6 @@ android {
 
 dependencies {
     implementation project(":common")
-    // Modern entry and migrated hooks. Legacy API remains compile-only while the old hook
-    // implementation is incrementally replaced; API 102 prevents the modern entry from calling it.
     compileOnly 'io.github.libxposed:api:102.0.0'
-    compileOnly 'de.robv.android.xposed:api:82'
     implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:4.3'
 }

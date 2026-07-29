@@ -2,7 +2,7 @@ package one.yufz.hmspush.hook.hms
 
 import android.content.Context
 import android.content.Intent
-import de.robv.android.xposed.XposedHelpers
+import one.yufz.xposed.ModernHelpers as XposedHelpers
 import one.yufz.hmspush.common.HMS_CORE_PUSH_ACTION_REGISTRATION
 import one.yufz.hmspush.hook.XLog
 import one.yufz.xposed.callMethod

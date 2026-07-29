@@ -1,7 +1,6 @@
 package one.yufz.hmspush.hook.fakedevice
 
 import android.os.Build
-import de.robv.android.xposed.callbacks.XC_LoadPackage
 import one.yufz.hmspush.hook.XLog
 import one.yufz.xposed.findClass
 import one.yufz.xposed.hookMethod
@@ -14,8 +13,8 @@ class DouYin : Common() {
         private const val TAG = "DouYin"
     }
 
-    override fun fake(lpparam: XC_LoadPackage.LoadPackageParam): Boolean {
-        super.fake(lpparam)
+    override fun fake(loadedPackage: LoadedPackage): Boolean {
+        super.fake(loadedPackage)
         if (Build.DISPLAY.contains("flyme", true) || Build.USER.contains("flyme", true)) {
             fakeProperty("ro.build.display.id" to "")
             fakeProperty("ro.build.user" to "")
@@ -24,8 +23,8 @@ class DouYin : Common() {
         }
 
         //public java.lang.String com.bytedance.common.network.DefaultNetWorkClient.post(java.lang.String,java.util.List,java.util.Map,com.bytedance.common.utility.NetworkClient$ReqContext)
-        val classAppLogNetworkClient = lpparam.classLoader.findClass("com.ss.android.ugc.aweme.statistic.AppLogNetworkClient")
-        val classReqContext = lpparam.classLoader.findClass("com.bytedance.common.utility.NetworkClient\$ReqContext")
+        val classAppLogNetworkClient = loadedPackage.classLoader.findClass("com.ss.android.ugc.aweme.statistic.AppLogNetworkClient")
+        val classReqContext = loadedPackage.classLoader.findClass("com.bytedance.common.utility.NetworkClient\$ReqContext")
         classAppLogNetworkClient.hookMethod("post", String::class.java, List::class.java, Map::class.java, classReqContext) {
             doAfter {
                 val url = args[0] as String

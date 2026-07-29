@@ -8,7 +8,6 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
-import de.robv.android.xposed.XposedHelpers
 import one.yufz.hmspush.hook.XLog
 import one.yufz.xposed.callMethod
 import one.yufz.xposed.findClass

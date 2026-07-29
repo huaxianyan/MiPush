@@ -9,9 +9,14 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
 import one.yufz.hmspush.common.HMS_CORE_PROCESS
 import one.yufz.hmspush.common.HMS_PACKAGE_NAME
-import one.yufz.hmspush.hook.fakedevice.fakeAllBuildInProperties
+import one.yufz.hmspush.hook.fakedevice.FakeDevice
+import one.yufz.hmspush.hook.fakedevice.LoadedPackage
 import one.yufz.hmspush.hook.hms.HookHMS
 import one.yufz.hmspush.hook.system.HookSystemService
+import one.yufz.hmspush.hook.systemui.HookNotificationSettingsManager
+import one.yufz.hmspush.hook.systemui.HookSystemUIPlugin
+import one.yufz.xposed.findClass
+import one.yufz.xposed.hook
 import one.yufz.xposed.hookMethod
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
@@ -46,7 +51,9 @@ class ModernXposedMod : XposedModule() {
     override fun onPackageLoaded(param: PackageLoadedParam) {
         if (shouldInstallGeneralPropertySpoof(param.packageName)) {
             try {
-                fakeAllBuildInProperties()
+                FakeDevice.fake(
+                    LoadedPackage(param.packageName, processName, param.defaultClassLoader)
+                )
                 log(
                     Log.INFO,
                     TAG,
@@ -65,6 +72,9 @@ class ModernXposedMod : XposedModule() {
     }
 
     override fun onPackageReady(param: PackageReadyParam) {
+        if (param.packageName == "com.android.systemui") {
+            installHyperOsSystemUiHooks(param.classLoader)
+        }
         if (param.packageName == HMS_PACKAGE_NAME && processName == HMS_CORE_PROCESS) {
             installApplicationContextCapture()
             try {
@@ -97,6 +107,24 @@ class ModernXposedMod : XposedModule() {
             return processName == packageName || processName.endsWith(":MSF")
         }
         return true
+    }
+
+    private fun installHyperOsSystemUiHooks(classLoader: ClassLoader) {
+        HookSystemUIPlugin(
+            "miui.systemui.plugin",
+            HookNotificationSettingsManager()
+        ).hook(classLoader)
+
+        HookSystemUIPlugin("miui.systemui.plugin") { pluginLoader ->
+            try {
+                pluginLoader.findClass("miui.systemui.notification.focus.FocusNotifUtils")
+                    .declaredMethods
+                    .first { it.name == "canShowFocus" }
+                    .hook { replace { true } }
+            } catch (t: Throwable) {
+                log(Log.ERROR, TAG, "Unable to install HyperOS focus notification hook", t)
+            }
+        }.hook(classLoader)
     }
 
     private fun installApplicationContextCapture() {

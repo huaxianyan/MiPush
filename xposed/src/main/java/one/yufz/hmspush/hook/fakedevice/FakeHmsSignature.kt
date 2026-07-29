@@ -3,9 +3,7 @@ package one.yufz.hmspush.hook.fakedevice
 import android.content.pm.PackageInfo
 import android.util.Base64
 import dalvik.system.DexClassLoader
-import de.robv.android.xposed.XposedHelpers
 import io.github.libxposed.api.XposedInterface
-import de.robv.android.xposed.callbacks.XC_LoadPackage
 import one.yufz.hmspush.common.HMS_CORE_SIGNATURE
 import one.yufz.hmspush.common.HMS_PACKAGE_NAME
 import one.yufz.hmspush.hook.XLog
@@ -17,10 +15,10 @@ object FakeHmsSignature {
     private var verifyApkHashHooked = false
     private var verifyApkHashUnhook: XposedInterface.HookHandle? = null
 
-    fun hook(lpparam: XC_LoadPackage.LoadPackageParam) {
-        XLog.d(TAG, "hook() called with: processName = ${lpparam.processName}")
+    fun hook(loadedPackage: LoadedPackage) {
+        XLog.d(TAG, "hook() called with: processName = ${loadedPackage.processName}")
 
-        tryHookVerifyApkHash(lpparam.classLoader)
+        tryHookVerifyApkHash(loadedPackage.classLoader)
 
         if (!verifyApkHashHooked) {
             verifyApkHashUnhook = DexClassLoader::class.java.hookConstructor(String::class.java, String::class.java, String::class.java, ClassLoader::class.java) {
@@ -28,7 +26,7 @@ object FakeHmsSignature {
             }
         }
 
-        val classApplicationPackageManager = lpparam.classLoader.findClass("android.app.ApplicationPackageManager")
+        val classApplicationPackageManager = loadedPackage.classLoader.findClass("android.app.ApplicationPackageManager")
         classApplicationPackageManager.hookMethod("getPackageInfo", String::class.java, Int::class.java) {
             doAfter {
                 val packageName = args[0] as String
@@ -53,8 +51,8 @@ object FakeHmsSignature {
 
             verifyApkHashHooked = true
             verifyApkHashUnhook?.unhook()
-        } catch (e: XposedHelpers.ClassNotFoundError) {
-            XLog.d(TAG, "tryHookVerifyApkHash: ClassNotFoundError")
+        } catch (e: ClassNotFoundException) {
+            XLog.d(TAG, "tryHookVerifyApkHash: ClassNotFoundException")
         } catch (e: NoSuchMethodError) {
             XLog.d(TAG, "tryHookVerifyApkHash: NoSuchMethodError")
         } catch (e: Throwable) {

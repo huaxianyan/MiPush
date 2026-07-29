@@ -32,6 +32,11 @@ def getVersionCode = { ->
     }
 }
 
+def getConfiguredVersionCode = { ->
+    def configuredVersionCode = project.findProperty('versionCode')
+    return configuredVersionCode != null ? Integer.parseInt(configuredVersionCode.toString()) : getVersionCode()
+}
+
 def getVersionName = { ->
     String versionName  = project.findProperty('versionName') ?: getVersionNameFromGit() ?: "VersionNameError"
     versionName = increaseVersionForPreRelease(versionName)
@@ -66,7 +71,7 @@ private String getVersionNameFromGit() {
 }
 
 ext {
-    gitVersionCode = getVersionCode()
+    gitVersionCode = getConfiguredVersionCode()
     gitVersionName = getVersionName()
     // Modern API 102 is the general release line. Keeping the original application ID allows
     // long-term-signed builds to update the frozen Legacy general edition in place.

@@ -2,6 +2,15 @@ name: Build installable APK
 
 on:
   workflow_dispatch:
+    inputs:
+      version_name:
+        description: Optional APK versionName override
+        required: false
+        type: string
+      version_code:
+        description: Optional APK versionCode override
+        required: false
+        type: string
   push:
     branches:
       - master
@@ -64,14 +73,25 @@ jobs:
           } > local.properties
 
       - name: Build installable release APK
+        env:
+          REQUESTED_VERSION_NAME: ${{ inputs.version_name }}
+          REQUESTED_VERSION_CODE: ${{ inputs.version_code }}
         run: |
           chmod +x gradlew
           version_name="actions-${GITHUB_SHA::7}"
           if [ "$GITHUB_REF_TYPE" = tag ]; then
             version_name="${GITHUB_REF_NAME#v}"
           fi
+          if [ -n "$REQUESTED_VERSION_NAME" ]; then
+            version_name="$REQUESTED_VERSION_NAME"
+          fi
+
+          gradle_args=(-PversionName="$version_name")
+          if [ -n "$REQUESTED_VERSION_CODE" ]; then
+            gradle_args+=(-PversionCode="$REQUESTED_VERSION_CODE")
+          fi
           ./gradlew --build-cache --stacktrace \
-            -PversionName="$version_name" \
+            "${gradle_args[@]}" \
             :app:assembleRelease
 
       - name: Verify Modern API 102 artifact

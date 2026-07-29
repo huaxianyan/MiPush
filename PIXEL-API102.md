@@ -53,9 +53,20 @@ No fallback QQ icon is bundled or enabled. MiPushFramework remains the sole sour
 - [x] Port the Pixel provider and geometry hooks from Legacy callbacks to API 102 interceptors.
 - [x] Remove Legacy Xposed API references and entry declarations.
 - [x] Keep the Pixel package identity and recommended SystemUI scope.
-- [ ] Build and inspect the signed Pixel API 102 APK.
-- [ ] Install with all other MiPush editions disabled in LSPosed.
-- [ ] Reboot and confirm the Pixel provider and geometry hooks install without errors.
-- [ ] Verify a QQ MiPush conversation notification retains its avatar and uses the custom monochrome `smallIcon` badge.
-- [ ] Verify the 48dp avatar and 4dp badge padding visually.
-- [ ] Verify genuine server-side delivery on the final Pixel build.
+- [x] Build and inspect the signed Pixel API 102 APK.
+- [x] Install with all other MiPush editions disabled in LSPosed.
+- [x] Reboot and confirm the Pixel provider and geometry hooks install without errors.
+- [x] Verify a QQ MiPush conversation notification retains its avatar and uses the custom monochrome `smallIcon` badge.
+- [x] Verify the 48dp avatar and 4dp badge padding visually.
+- [x] Verify genuine server-side delivery while QQ:MSF remains absent.
+
+## Device validation
+
+Validated on Pixel 10 Pro, Android 16 / API 36, with LSPosed 2.1.0 / API 102. The historical-notification test exercised both Pixel paths and logged:
+
+```text
+Adjusted QQ conversation avatar to 48dp and badge icon padding to 4dp
+Using QQ small icon via Pixel NotificationIconProvider.getIconType
+```
+
+A separate live test received `Api102 pixel 测试` from the Xiaomi server while Thanox kept `com.tencent.mobileqq:MSF` absent. XMSF created the QQ conversation channel and published the notification as `com.tencent.mobileqq` with `opPkg=android`; the 68x68 small icon, 100x100 large icon, valid conversation shortcut, and `MessagingStyle` payload remained intact.

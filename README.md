@@ -19,6 +19,30 @@
 - LSPosed 里 MiPush 模块中勾选你需要支持推送的目标应用（这一步目的是将应用环境伪装成小米设备，如果你使用了其他方式伪装设备，可以不进行这一步），然后重启一到两次目标应用使其注册上推送通道
 
 - 杀掉应用测试推送是否生效（可以使用QQ、酷安测试）
+
+### 版本选择
+
+正式 Release 同时提供两个 Modern Xposed API 102 APK，二选一安装并启用：
+
+#### 通用版
+
+- 包名：`com.neko7ina.mipush`
+- 面向一般 Android、MIUI/HyperOS 环境。
+- 推荐作用域：系统框架、SystemUI、XMSF，以及需要属性伪装的目标应用。
+- SystemUI 代码用于通用的焦点通知策略兼容；标准 Android 的基础推送链路不依赖该视觉策略 Hook。
+
+#### Pixel Android 16 适配版
+
+- 包名：`com.neko7ina.mipush.pixel`
+- 仅面向 Pixel Android 16；Pixel 分支不包含任何 MIUI/HyperOS SystemUI 插件代码。
+- 在通用 API 102 推送能力之外，针对 QQ MiPush 会话通知：
+  - 保留联系人头像、群头像、`Person.icon` 和 `android.largeIcon`；
+  - 右下角角标使用 MiPushFramework 已提供的单色 `smallIcon`，不内置或自动启用 QQ fallback 图标；
+  - 仅将 Android 16 的 40dp 会话模板恢复为 48dp 头像、20dp 角标、30dp 角标位置和 4dp 内边距；
+  - 严格过滤 `packageName=com.tencent.mobileqq` 与 `tag=mipush_com.tencent.mobileqq`，接口不匹配时安全跳过。
+- Pixel 视觉适配依赖 `com.android.systemui` 作用域。
+
+两个 Modern APK 沿用对应 Legacy 版的包名和长期签名，可以分别原位更新 Legacy 通用版和 Legacy Pixel 版。不要在同一组 LSPosed 作用域中同时启用多个版本。
 　　
 ### 注意：
 - 并不是所有应用都支持推送，目前测试已支持大部分应用，比如 QQ、酷安等
@@ -42,10 +66,11 @@
 ### 版本分支
 
 - `master`：Modern Xposed API 102 通用发行版。
+- `modern-api-102-pixel-android16`：Modern Xposed API 102 Pixel Android 16 适配版。
 - `legacy-api-82-general`：冻结的 Legacy 通用版，保留用于查阅和回退分析。
 - `pixel-android-16-notification-badge`：冻结的 Pixel Android 16 Legacy 视觉适配版。
 
-不要在相同 LSPosed 作用域中同时启用通用版和 Pixel Legacy 版。
+不要在相同 LSPosed 作用域中同时启用通用版、Modern Pixel 版或 Pixel Legacy 版。
 
 ### GitHub Actions 构建
 
